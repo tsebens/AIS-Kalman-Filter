@@ -34,14 +34,9 @@ Each list must be a list of xy tuples.
 
 '''
 def make_plot(data, predictions, estimates):
-    data = list(enumerate(data))
-    predictions = list(enumerate(predictions))
-    estimates = list(enumerate(estimates))
     plot_data(data)
     plot_predictions(predictions)
     plot_estimates(estimates)
     plot.grid()
     plot.legend()
     plot.show()
-
-make_plot((1,2,3),(2,3,4),(3,4,5))

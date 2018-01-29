@@ -17,6 +17,9 @@ def ais_kalman(data, loc_fact, head_fact, SoG_fact):
 	init = data[0]
 	loc_est, head_est, SoG_est, prev_time = init[1], init[2], init[3], init[4]	
 	estimates = []
+	loc_predictions = []
+	head_predictions = []
+	SoG_predictions = []
 	
 	for row in data[1:]:
 		# These represent the values held by the data point we are currently considering
@@ -29,11 +32,14 @@ def ais_kalman(data, loc_fact, head_fact, SoG_fact):
 		loc_pred = np.add(loc_est, head_est*SoG_est*seconds_passed)
 		head_pred = head_est # We assume that vessels maintain their heading over time.
 		SoG_pred = SoG_est # We assume that vessels maintain their speed over time
+		loc_predictions.append(loc_pred)
+		head_predictions.append(head_pred)
+		SoG_predictions.append(SoG_pred)
 		# Now that we have all of our predictions, we will compare them to our measurements, and create our new estimates.
 		loc_est = np.add(loc_pred, loc_fact*loc_meas)
 		head_est = np.add(head_pred, head_fact*head_meas)
 		SoG_est = SoG_pred+SoG_fact*SoG_meas
 		estimates.append(loc_est, head_est, SoG_est, time_meas)
-	return estimates
+	return estimates, loc_predictions, head_predictions, SoG_pred
 		
 		
