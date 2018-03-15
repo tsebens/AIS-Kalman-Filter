@@ -1,16 +1,6 @@
-import plotter
-import h_g_filter
-import data_gen
-import math
+from random import shuffle
 
-loc_fact = .25
-head_fact = .25
-SoG_fact = .25
+from data_import import order_ais_data_by_ts, pull_data_from_ais_csv, reorder_ais_csv
 
-def sin_1_4th(x):
-    return math.sin(x/4)
-
-data = list(data_gen.gen_data(sin_1_4th, .6, 100))
-
-estimates, loc_pred, head_pred, sog_pred = h_g_filter.ais_kalman(data, loc_fact, head_fact, SoG_fact)
-plotter.make_plot(data, loc_pred, estimates)
+fp = r'C:\Users\tristan.sebens\Projects\AIS-Kalman-Filter\data\440157000.csv'
+reorder_ais_csv(fp)
