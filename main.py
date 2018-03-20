@@ -1,6 +1,9 @@
-from random import shuffle
+from data_import import pull_data_from_ais_csv, convert_ais_data_to_usable_form
+from plot import plot_loc_data, show_plot
 
-from data_import import order_ais_data_by_ts, pull_data_from_ais_csv, reorder_ais_csv
-
-fp = r'C:\Users\tristan.sebens\Projects\AIS-Kalman-Filter\data\440157000.csv'
-reorder_ais_csv(fp)
+fp = r'C:\Users\tristan.sebens\Projects\AIS-Kalman-Filter\data\367186180.csv'
+# raw_ais = pull_data_from_ais_csv(fp)
+parsed_ais = list(convert_ais_data_to_usable_form(fp))
+plot_loc_data([point[0] for point in parsed_ais])
+print(len(parsed_ais))
+show_plot()

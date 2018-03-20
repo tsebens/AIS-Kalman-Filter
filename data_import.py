@@ -86,7 +86,7 @@ def convert_ais_data_to_usable_form(fp):
         reader = DictReader(file)
         ais = [row for row in reader]
     for point in ais:
-        loc = lat_lon_to_loc_vector(point)
+        loc = lat_lon_to_loc_vector(point, lat_fn='Latitude__DDMM_mmmm_', lon_fn='Longitude__DDDMM_mmmm_')
         heading = true_heading_to_unit_vector(point)
         SoG = sog(point)
         time = ais_timestamp_to_datetime(point['Date_time_stamp'])

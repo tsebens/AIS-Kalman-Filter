@@ -6,8 +6,8 @@ from timezones import UTC
 
 
 # Converts a true heading to a unit vector
-def true_heading_to_unit_vector(point):
-    unit_v = np.array([1, tan(radians(point[['True_heading']]))])
+def true_heading_to_unit_vector(point, head_fn='True_heading'):
+    unit_v = np.array([1, tan(radians(float(point[head_fn])))])
     mag = np.linalg.norm(unit_v)
     unit_v = unit_v/mag
     unit_v = np.array([unit_v[1], unit_v[0]])

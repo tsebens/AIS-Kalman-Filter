@@ -8,6 +8,10 @@ plt.grid()
 plt.show()
 '''
 
+def show_plot():
+    plot.show()
+
+
 def plot_points(points, style):
     xs = [pt[0] for pt in points]
     ys = [pt[1] for pt in points]
@@ -78,7 +82,7 @@ def plot_heading_data(head_data, loc_data):
                        color=['k' for point in head_data],
                        width=0.001,
                        )
-    
+
 
 def plot_heading_estimates(head_estimates, loc_estimates):
     plot.axes().quiver([point[0] for point in loc_estimates], [point[1] for point in loc_estimates],
