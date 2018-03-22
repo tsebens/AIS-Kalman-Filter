@@ -2,6 +2,27 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+
+'''
+The default functions for estimating 
+'''
+# TODO: Could instantiate a rule that the SoG can't change by more than n mps in t seconds
+def estimate_next_SoG(SoG_fact, SoG_meas, SoG_pred):
+    SoG_est = (1 - SoG_fact) * SoG_pred + SoG_fact * SoG_meas
+    return SoG_est
+
+
+# TODO: Could instate a rule that the heading cannot change by more than n degrees in t seconds
+def estimate_next_heading(head_fact, head_meas, head_pred):
+    head_est = np.add((1 - head_fact) * head_pred, head_fact * head_meas)
+    return head_est
+
+
+# TODO: Could instate a rule that the location cannot change by more distance than SoG_est * seconds passed * 1.5 (just to be flexible).
+def estimate_next_location(loc_fact, loc_meas, loc_pred):
+    loc_est = np.add((1 - loc_fact) * loc_pred, loc_fact * loc_meas)
+    return loc_est
+
 '''
 Executes a Kalman filter on the passed ais_data and returns a list of estimates for location(lat/lon), heading, and SoG for every point in ais_data after the first.
 The first point is considered to be completely accurate. Gotta start somewhere.
@@ -19,9 +40,16 @@ the final estimates will be far more closely tied to the predictions made prior 
 
 In simpler terms, think of fact as a metric of how trustworthy a set of measurements are: A low fact is good for 
 measurements that are error prone. A high fact is good for measurements that tend to be accurate.
-'''
-def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5):
 
+The prediction and estimation functions are used to provide the predictions and the estimates for the new values 
+of the location, heading, and speed, based on the relevant previous values.
+By defining these as passed functions with default values, it becomes possible to inject the logi which 
+the filter uses to make it's predictions and estimates.
+'''
+def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
+               est_location_func=estimate_next_location, # Function used to estimate the
+               est_heading_func=estimate_next_heading,
+               est_SoG_func=estimate_next_SoG):
     # Initialize our lists for storing the results of the filter
     loc_predictions, head_predictions, SoG_predictions, loc_estimates, head_estimates, SoG_estimates = [], [], [], [], [], []
     # Populate our initial values
@@ -40,28 +68,38 @@ def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5):
         prev_time = time_meas # Reset the time for the next iteration
         seconds_passed = time_passed.total_seconds() # Get the value in seconds. This will probably be useful. Someday. Hopefully.
 
+        # TODO: The modularity and flexibility of this filter can be improved here -->
+        '''
+        By refactoring this step into a function that is passed into the filter as a parameter. So rather than 
+        calculating our predictions here, we would simply call the function that had been given to us which 
+        would take our loc, head, and SoG estimates as parameters, and return a loc, head, and SoG predictions.
+        '''
         # Now we can make our predictions for location, heading, and SoG
         # (x0, y0)+(xHead, yHead)*SoG*dt
         # The previous location estimate plus the amount of distance they would cover at the estimated speed in the time
         # that passed. Multiplied by the unit vector representing our estimated heading. Simple vector addition
         loc_pred = np.add(loc_est, head_est*SoG_est)
         head_pred = head_est  # We assume that vessels maintain their heading over time.
-        SoG_pred = SoG_est  # We assume that vessels maintain their speed over time
+        SoG_pred = SoG_est    # We assume that vessels maintain their speed over time.
 
         # Log our predictions into their appropriate containers
         loc_predictions.append(loc_pred)
         head_predictions.append(head_pred)
         SoG_predictions.append(SoG_pred)
+
+        #TODO: The same refactor described above could be applied here.
         # Now that we have all of our predictions, we will compare them to our measurements, and create our new estimates.
-        loc_est = np.add ((1-loc_fact )*loc_pred , loc_fact  * loc_meas)  # TODO: Could instate a rule that the location cannot change by more distance than SoG_est * seconds passed * 1.5 (just to be flexible).
-        head_est = np.add((1-head_fact)*head_pred, head_fact * head_meas) # TODO: Could instate a rule that the heading cannot change by more than n degrees in t seconds
-        SoG_est =         (1-SoG_fact )*SoG_pred + SoG_fact  * SoG_meas   # TODO: Same with the SoG. Can't change by more than n mps in t seconds
+        loc_est = est_location_func(loc_fact, loc_meas, loc_pred)
+        head_est = est_heading_func(head_fact, head_meas, head_pred)
+        SoG_est = est_SoG_func(SoG_fact, SoG_meas, SoG_pred)
         # Log out estimates into their containers
         loc_estimates.append(loc_est)
         head_estimates.append(head_est)
         SoG_estimates.append(SoG_est)
 
     return loc_estimates, loc_predictions, head_estimates, head_predictions, SoG_estimates, SoG_predictions
+
+
 
 
 
