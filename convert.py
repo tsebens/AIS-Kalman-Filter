@@ -4,6 +4,11 @@ import numpy as np
 from datetime import datetime
 from timezones import UTC
 
+'''
+Constants
+'''
+# knts * knts_to_mps_conv_fact = m/s
+knts_to_mps_conv_fact = 0.51444444444
 
 # Converts a true heading to a unit vector
 def true_heading_to_unit_vector(point, head_fn='True_heading'):
@@ -29,3 +34,7 @@ def lat_lon_to_loc_vector(point, lat_fn='AA_LAT', lon_fn='AA_LON'):
 
 def sog(point, sog_fn='SOG__knts_'):
     return point[sog_fn]
+
+
+def knts_to_mps(knts):
+    return knts * knts_to_mps_conv_fact
