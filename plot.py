@@ -32,6 +32,11 @@ def plot_loc_predictions(points):
     style = 'bs--'
     plot_points(points, style)
 
+
+def plot_b_func(points):
+    style = 'g--'
+    plot_points(points, style)
+
 '''
 Accepts lists of points loc_data, predictions, and estimates
 
@@ -45,14 +50,22 @@ def make_plot(loc_data, loc_preds, loc_ests):
 
 '''
 Same as make_plot, but it plots the point in a step by step manner
+
+If b_func is defined, the system will plot the base function as a green dotted line behind the other plots.
 '''
-def make_iterative_plot(loc_data, loc_preds, loc_ests, delay):
+def make_iterative_plot(loc_data, loc_preds, loc_ests, b_func=None, delay=0.5):
     plot.grid()
+    if b_func != None:
+        b_vals = [(point[0], b_func(point[0])) for point in loc_data]
     for i in range(len(loc_data)-1):
         curr_loc_data = loc_data[:i]
         curr_loc_preds = loc_preds[:i]
         curr_loc_ests = loc_ests[:i]
+        if b_func != None:
+            curr_b_vals = b_vals[:i]
+            plot_b_func(curr_b_vals)
         make_plot(curr_loc_data, curr_loc_preds, curr_loc_ests)
+
         plot.pause(delay)
 
 def make_comparison_plot(loc_data, loc_estimates, loc_predictions, head_data, head_estimates, head_predicitions, func):
