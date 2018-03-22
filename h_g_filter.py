@@ -1,27 +1,7 @@
 # Kalman filter
 import numpy as np
-import matplotlib.pyplot as plt
 
-
-'''
-The default functions for estimating 
-'''
-# TODO: Could instantiate a rule that the SoG can't change by more than n mps in t seconds
-def estimate_next_SoG(SoG_fact, SoG_meas, SoG_pred):
-    SoG_est = (1 - SoG_fact) * SoG_pred + SoG_fact * SoG_meas
-    return SoG_est
-
-
-# TODO: Could instate a rule that the heading cannot change by more than n degrees in t seconds
-def estimate_next_heading(head_fact, head_meas, head_pred):
-    head_est = np.add((1 - head_fact) * head_pred, head_fact * head_meas)
-    return head_est
-
-
-# TODO: Could instate a rule that the location cannot change by more distance than SoG_est * seconds passed * 1.5 (just to be flexible).
-def estimate_next_location(loc_fact, loc_meas, loc_pred):
-    loc_est = np.add((1 - loc_fact) * loc_pred, loc_fact * loc_meas)
-    return loc_est
+from estimation import default_SoG_estimate, defalt_heading_estimate, default_location_estimate
 
 '''
 Executes a Kalman filter on the passed ais_data and returns a list of estimates for location(lat/lon), heading, and SoG for every point in ais_data after the first.
@@ -47,9 +27,9 @@ By defining these as passed functions with default values, it becomes possible t
 the filter uses to make it's predictions and estimates.
 '''
 def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
-               est_location_func=estimate_next_location, # Function used to estimate the
-               est_heading_func=estimate_next_heading,
-               est_SoG_func=estimate_next_SoG):
+               est_location_func=default_location_estimate,  # Functions used to estimate filter values
+                est_heading_func=defalt_heading_estimate,
+                    est_SoG_func=default_SoG_estimate):
     # Initialize our lists for storing the results of the filter
     loc_predictions, head_predictions, SoG_predictions, loc_estimates, head_estimates, SoG_estimates = [], [], [], [], [], []
     # Populate our initial values
@@ -64,9 +44,7 @@ def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
         # These represent the values held by the data point we are currently considering
         loc_meas, head_meas, SoG_meas, time_meas = row[0], row[1], row[2], row[3]
         # Next calculate how much time has passed since the last reading
-        time_passed = time_meas - prev_time
-        prev_time = time_meas # Reset the time for the next iteration
-        seconds_passed = time_passed.total_seconds() # Get the value in seconds. This will probably be useful. Someday. Hopefully.
+        calculate_seconds_passed(prev_time, time_meas)
 
         # TODO: The modularity and flexibility of this filter can be improved here -->
         '''
@@ -87,7 +65,6 @@ def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
         head_predictions.append(head_pred)
         SoG_predictions.append(SoG_pred)
 
-        #TODO: The same refactor described above could be applied here.
         # Now that we have all of our predictions, we will compare them to our measurements, and create our new estimates.
         loc_est = est_location_func(loc_fact, loc_meas, loc_pred)
         head_est = est_heading_func(head_fact, head_meas, head_pred)
@@ -98,6 +75,12 @@ def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
         SoG_estimates.append(SoG_est)
 
     return loc_estimates, loc_predictions, head_estimates, head_predictions, SoG_estimates, SoG_predictions
+
+
+def calculate_seconds_passed(prev_time, time_meas):
+    time_passed = time_meas - prev_time
+    prev_time = time_meas  # Reset the time for the next iteration
+    seconds_passed = time_passed.total_seconds()  # Get the value in seconds. This will probably be useful. Someday. Hopefully.
 
 
 
