@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 '''
-Executes a Kalman filter on the passed data and returns a list of estimates for location(lat/lon), heading, and SoG for every point in data after the first.
+Executes a Kalman filter on the passed ais_data and returns a list of estimates for location(lat/lon), heading, and SoG for every point in ais_data after the first.
 The first point is considered to be completely accurate. Gotta start somewhere.
 Data is an nx4 numpy array, each row of which == (loc, heading, SoG, time)
 loc must be a numpy array, representing Lat/Lon (lat, lon)

@@ -13,7 +13,7 @@ def true_heading_to_unit_vector(point, head_fn='True_heading'):
     unit_v = np.array([unit_v[1], unit_v[0]])
     return unit_v
 
-# TODO: Convert a timestamp of format [2/26/2018 12:03:59] to a datetime object
+
 def ais_timestamp_to_datetime(timestamp, tz=UTC):
     date, time = timestamp.split(' ')
     year, month, day = date.split('-')

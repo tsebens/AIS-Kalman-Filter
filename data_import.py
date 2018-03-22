@@ -27,7 +27,7 @@ def pull_ais_data_from_dir(d):
     return ais_data
 
 
-# Read all data in a single csv file and return that data as a list of dicts
+# Read all ais_data in a single csv file and return that ais_data as a list of dicts
 def pull_data_from_ais_csv(fp):
     with open(fp) as file:
         reader = DictReader(file)
@@ -35,7 +35,7 @@ def pull_data_from_ais_csv(fp):
     return ais_data
 
 
-# Groups ais data by it's MMSI data. Returns a list of dicts. Each dict consists of a single key/value pair, where the
+# Groups ais ais_data by it's MMSI ais_data. Returns a list of dicts. Each dict consists of a single key/value pair, where the
 # key is a given MMSI number, and the value is another list of dicts containing all of the AIS data points of that
 # MMSI number
 def group_ais_data_by_mmsi(ais_data):
@@ -79,14 +79,14 @@ def get_ais_data_from_orbcomm():
     get_ais_data_from_dir(orbcomm_dir)
 
 
-# Conversion function. Accepts raw AIS data as provided by OrbComm and outputs the data in the format specified and
+# Conversion function. Accepts raw AIS ais_data as provided by OrbComm and outputs the ais_data in the format specified and
 # expected by the kalman filter.
 def convert_ais_data_to_usable_form(fp):
     with open(fp) as file:
         reader = DictReader(file)
         ais = [row for row in reader]
     for point in ais:
-        loc = lat_lon_to_loc_vector(point, lat_fn='Latitude__DDMM_mmmm_', lon_fn='Longitude__DDDMM_mmmm_')
+        loc = lat_lon_to_loc_vector(point)
         heading = true_heading_to_unit_vector(point)
         SoG = sog(point)
         time = ais_timestamp_to_datetime(point['Date_time_stamp'])
@@ -94,8 +94,8 @@ def convert_ais_data_to_usable_form(fp):
         yield (loc, heading, SoG, time)
 
 
-# Order ais data by timestamp, so that all data points are in chronological order.
-# This function assumes that the incoming data is unformatted data from OrbComm
+# Order ais ais_data by timestamp, so that all ais_data points are in chronological order.
+# This function assumes that the incoming ais_data is unformatted ais_data from OrbComm
 def order_ais_data_by_ts(ais_data, ts_label='Date_time_stamp'):
     # While sorting, each data point has its timestamp converted to a datetime object in situ for comparison
     # This does not alter the recorded value for the point's timestamp. It remains in the OrbComm timestamp format.
