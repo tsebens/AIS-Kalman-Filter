@@ -1,6 +1,10 @@
 import numpy as np
 
 '''
+IMPORTANT: ALL FUNCTION GROUPS MUST HAVE THE SAME FUNCTION SIGNATURE
+'''
+
+'''
 The default functions for estimating 
 '''
 def default_SoG_estimate(SoG_fact, SoG_meas, SoG_pred):

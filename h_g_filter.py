@@ -1,7 +1,7 @@
 # Kalman filter
-import numpy as np
 
 from estimation import default_SoG_estimate, defalt_heading_estimate, default_location_estimate
+from prediction import default_SoG_prediction, default_heading_prediction, default_location_prediction
 
 '''
 Executes a Kalman filter on the passed ais_data and returns a list of estimates for location(lat/lon), heading, and SoG for every point in ais_data after the first.
@@ -29,7 +29,11 @@ the filter uses to make it's predictions and estimates.
 def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
                est_location_func=default_location_estimate,  # Functions used to estimate filter values
                 est_heading_func=defalt_heading_estimate,
-                    est_SoG_func=default_SoG_estimate):
+                    est_SoG_func=default_SoG_estimate,
+              pred_location_func=default_location_prediction,
+               pred_heading_func=default_heading_prediction,
+                   pred_SoG_func=default_SoG_prediction
+               ):
     # Initialize our lists for storing the results of the filter
     loc_predictions, head_predictions, SoG_predictions, loc_estimates, head_estimates, SoG_estimates = [], [], [], [], [], []
     # Populate our initial values
@@ -46,19 +50,13 @@ def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
         # Next calculate how much time has passed since the last reading
         calculate_seconds_passed(prev_time, time_meas)
 
-        # TODO: The modularity and flexibility of this filter can be improved here -->
-        '''
-        By refactoring this step into a function that is passed into the filter as a parameter. So rather than 
-        calculating our predictions here, we would simply call the function that had been given to us which 
-        would take our loc, head, and SoG estimates as parameters, and return a loc, head, and SoG predictions.
-        '''
         # Now we can make our predictions for location, heading, and SoG
         # (x0, y0)+(xHead, yHead)*SoG*dt
         # The previous location estimate plus the amount of distance they would cover at the estimated speed in the time
         # that passed. Multiplied by the unit vector representing our estimated heading. Simple vector addition
-        loc_pred = np.add(loc_est, head_est*SoG_est)
-        head_pred = head_est  # We assume that vessels maintain their heading over time.
-        SoG_pred = SoG_est    # We assume that vessels maintain their speed over time.
+        loc_pred = pred_location_func(SoG_est, head_est, loc_est)
+        head_pred = pred_heading_func(head_est)
+        SoG_pred = pred_SoG_func(SoG_est)
 
         # Log our predictions into their appropriate containers
         loc_predictions.append(loc_pred)
@@ -73,13 +71,14 @@ def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
         loc_estimates.append(loc_est)
         head_estimates.append(head_est)
         SoG_estimates.append(SoG_est)
+        prev_time = time_meas  # Reset the time for the next iteration
+
 
     return loc_estimates, loc_predictions, head_estimates, head_predictions, SoG_estimates, SoG_predictions
 
 
 def calculate_seconds_passed(prev_time, time_meas):
     time_passed = time_meas - prev_time
-    prev_time = time_meas  # Reset the time for the next iteration
     seconds_passed = time_passed.total_seconds()  # Get the value in seconds. This will probably be useful. Someday. Hopefully.
 
 
