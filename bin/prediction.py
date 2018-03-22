@@ -7,6 +7,8 @@ IMPORTANT: ALL FUNCTION GROUPS MUST HAVE THE SAME FUNCTION SIGNATURE
 All functions should have a uniform function signature, where all parameters have the same name, and the same order
 In addition, all parameters should be given empty default values. This way, any function that is called will simply 
 have the relevant parameters overridden
+
+Because of this, whenever the functions are called, the parameters must be explicitly named
 '''
 
 

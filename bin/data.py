@@ -105,7 +105,7 @@ def gen_test_ais_data(loc_data, noise_fact=0.1):
 '''
 Generate semi noisy ais ais_data, complete with location, heading, and SoG measurements, based on a mathematical function
 '''
-def gen_random_data(b_func=sin_1_4th, noise_fact=0.01, num_points=100):
+def gen_random_data(b_func=sin_1_4th, noise_fact=0.2, num_points=100):
     loc_data = gen_loc_data(b_func, noise_fact, num_points)
     return gen_test_ais_data(loc_data, noise_fact)
 

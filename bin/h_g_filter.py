@@ -54,9 +54,9 @@ def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
         # (x0, y0)+(xHead, yHead)*SoG*dt
         # The previous location estimate plus the amount of distance they would cover at the estimated speed in the time
         # that passed. Multiplied by the unit vector representing our estimated heading. Simple vector addition
-        loc_pred = pred_location_func(SoG_est, head_est, loc_est)
-        head_pred = pred_heading_func(head_est)
-        SoG_pred = pred_SoG_func(SoG_est)
+        loc_pred = pred_location_func(loc_est=loc_est, head_est=head_est, SoG_est=SoG_est)
+        head_pred = pred_heading_func(head_est=head_est)
+        SoG_pred = pred_SoG_func(SoG_est=SoG_est)
 
         # Log our predictions into their appropriate containers
         loc_predictions.append(loc_pred)
