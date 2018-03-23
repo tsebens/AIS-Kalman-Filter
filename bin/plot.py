@@ -53,7 +53,10 @@ Same as make_plot, but it plots the point in a step by step manner
 
 If b_func is defined, the system will plot the base function as a green dotted line behind the other plots.
 '''
-def make_iterative_plot(loc_data, loc_preds, loc_ests, b_func=None, delay=0.5):
+def make_iterative_plot(loc_states, b_func=None, delay=0.5):
+    loc_data = [state.meas for state in loc_states]
+    loc_preds = [state.pred for state in loc_states]
+    loc_ests = [state.est for state in loc_states]
     plot.grid()
     if b_func != None:
         b_vals = [(point[0], b_func(point[0])) for point in loc_data]
