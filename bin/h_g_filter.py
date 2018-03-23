@@ -57,12 +57,12 @@ def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
         # (x0, y0)+(xHead, yHead)*SoG*dt
         # The previous location estimate plus the amount of distance they would cover at the estimated speed in the time
         # that passed. Multiplied by the unit vector representing our estimated heading. Simple vector addition
-        loc_pred = pred_location_func(loc_est=loc_est, head_est=head_est, SoG_est=SoG_est)
-        curr_state.loc_state.pred = pred_location_func(prev_state=prev_state)
-        head_pred = pred_heading_func(head_est=head_est)
-        curr_state.head_state.pred = pred_heading_func(prev_state=prev_state)
-        SoG_pred = pred_SoG_func(SoG_est=SoG_est)
-        curr_state.SoG_state.pred = pred_SoG_func(prev_state=prev_state)
+        loc_pred = pred_location_func(curr_state, prev_state)
+        curr_state.loc_state.pred = pred_location_func(curr_state, prev_state)
+        head_pred = pred_heading_func(curr_state, prev_state)
+        curr_state.head_state.pred = pred_heading_func(curr_state, prev_state)
+        SoG_pred = pred_SoG_func(curr_state, prev_state)
+        curr_state.SoG_state.pred = pred_SoG_func(curr_state, prev_state)
 
         # Log our predictions into their appropriate containers
         loc_predictions.append(loc_pred)
@@ -70,11 +70,11 @@ def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
         SoG_predictions.append(SoG_pred)
 
         # Now that we have all of our predictions, we will compare them to our measurements, and create our new estimates.
-        loc_est = est_location_func(loc_fact, loc_meas, loc_pred)
+        loc_est = est_location_func(loc_fact, curr_state, prev_state)
         curr_state.loc_state.est = loc_est
-        head_est = est_heading_func(head_fact, head_meas, head_pred)
+        head_est = est_heading_func(head_fact, curr_state, prev_state)
         curr_state.head_state.est = head_est
-        SoG_est = est_SoG_func(SoG_fact, SoG_meas, SoG_pred)
+        SoG_est = est_SoG_func(SoG_fact, curr_state, prev_state)
         curr_state.SoG_state.est = SoG_est
         # Log out estimates into their containers
         loc_estimates.append(loc_est)

@@ -15,28 +15,19 @@ Because of this, whenever the functions are called, the parameters must be expli
 '''
 The default prediction functions
 '''
-def default_SoG_prediction(loc_est=None, head_est=None, SoG_est=None, curr_state=None, prev_state=None):
-    if prev_state==None:
-        SoG_pred = SoG_est  # We assume that vessels maintain their speed over time.
-    else:
-        SoG_pred = prev_state.SoG_state.est # We assume that vessels maintain their speed over time.
-    return SoG_pred
+def default_SoG_prediction(curr_state, prev_state):
+    return prev_state.SoG_state.est # We assume that vessels maintain their speed over time.
 
 
-def default_heading_prediction(loc_est=None, head_est=None, SoG_est=None, curr_state=None, prev_state=None):
-    if prev_state==None:
-        head_pred = head_est  # We assume that vessels maintain their heading over time.
-    else:
-        head_pred = prev_state.head_state.est
-    return head_pred
+
+def default_heading_prediction(curr_state, prev_state):
+    return prev_state.head_state.est
 
 
-def default_location_prediction(loc_est=None, head_est=None, SoG_est=None, curr_state=None, prev_state=None):
-    if prev_state==None:
-        loc_pred = np.add(loc_est, head_est * SoG_est)
-    else:
-        loc_pred = np.add(prev_state.loc_state.est, prev_state.head_state.est * prev_state.SoG_state.est)
-    return loc_pred
+
+def default_location_prediction(curr_state, prev_state):
+    return np.add(prev_state.loc_state.est, prev_state.head_state.est * prev_state.SoG_state.est)
+
 
 
 
