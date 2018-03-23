@@ -58,3 +58,6 @@ def make_state_from_deprecated_ais_data_format(data):
     head_state = VarState(meas=data[1])
     SoG_state = VarState(meas=data[2])
     return VesselState(loc_state=loc_state, head_state=head_state, SoG_state=SoG_state, timestamp=data[3])
+
+def make_est_from_meas_pred_and_fact(meas, pred, fact):
+    return (1-fact)*pred+fact*meas
