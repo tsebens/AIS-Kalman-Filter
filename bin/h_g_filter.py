@@ -1,5 +1,5 @@
 # Kalman filter
-
+from convert import make_state_from_deprecated_ais_data_format as make_state, make_initial_state_from_deprecated_ais_data_format as make_init_state
 from estimation import default_SoG_estimate, defalt_heading_estimate, default_location_estimate
 from prediction import default_SoG_prediction, default_heading_prediction, default_location_prediction
 
@@ -27,17 +27,19 @@ By defining these as passed functions with default values, it becomes possible t
 the filter uses to make it's predictions and estimates.
 '''
 def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
-               est_location_func=default_location_estimate,  # Functions used to estimate filter values
-                est_heading_func=defalt_heading_estimate,
-                    est_SoG_func=default_SoG_estimate,
-              pred_location_func=default_location_prediction,
-               pred_heading_func=default_heading_prediction,
-                   pred_SoG_func=default_SoG_prediction
-               ):
+                                        # Functions used to calculate filter predictions and estimates
+                                       est_location_func=default_location_estimate,
+                                        est_heading_func=defalt_heading_estimate,
+                                            est_SoG_func=default_SoG_estimate,
+                                      pred_location_func=default_location_prediction,
+                                       pred_heading_func=default_heading_prediction,
+                                           pred_SoG_func=default_SoG_prediction):
     # Initialize our lists for storing the results of the filter
     loc_predictions, head_predictions, SoG_predictions, loc_estimates, head_estimates, SoG_estimates = [], [], [], [], [], []
+    vessel_states = []
     # Populate our initial values
     init = data[0]
+    prev_state = make_init_state(data[0])
     # loc_est is a vector of the form (x,y) or (lon, lat) that indicates the vessels current location in Alaska Albers coordinates
     # head_est is a unit vector (length = 1) of the form (x,y) which indicates the vessel's current heading in Alaska Albers coordinates
     # SoG is a vectorless float value indicating the vessels's speed in m/s
@@ -47,6 +49,7 @@ def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
     for row in data[1:]:
         # These represent the values held by the data point we are currently considering
         loc_meas, head_meas, SoG_meas, time_meas = row[0], row[1], row[2], row[3]
+        curr_state = make_state(row)
         # Next calculate how much time has passed since the last reading
         calculate_seconds_passed(prev_time, time_meas)
 
@@ -55,8 +58,11 @@ def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
         # The previous location estimate plus the amount of distance they would cover at the estimated speed in the time
         # that passed. Multiplied by the unit vector representing our estimated heading. Simple vector addition
         loc_pred = pred_location_func(loc_est=loc_est, head_est=head_est, SoG_est=SoG_est)
+        curr_state.loc_state.pred = loc_pred
         head_pred = pred_heading_func(head_est=head_est)
+        curr_state.head_state.pred = head_pred
         SoG_pred = pred_SoG_func(SoG_est=SoG_est)
+        curr_state.SoG_state.pred = SoG_pred
 
         # Log our predictions into their appropriate containers
         loc_predictions.append(loc_pred)
@@ -65,13 +71,18 @@ def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
 
         # Now that we have all of our predictions, we will compare them to our measurements, and create our new estimates.
         loc_est = est_location_func(loc_fact, loc_meas, loc_pred)
+        curr_state.loc_state.est = loc_est
         head_est = est_heading_func(head_fact, head_meas, head_pred)
+        curr_state.head_state.est = head_est
         SoG_est = est_SoG_func(SoG_fact, SoG_meas, SoG_pred)
+        curr_state.SoG_state.est = SoG_est
         # Log out estimates into their containers
         loc_estimates.append(loc_est)
         head_estimates.append(head_est)
         SoG_estimates.append(SoG_est)
         prev_time = time_meas  # Reset the time for the next iteration
+        vessel_states.append(prev_state)
+        prev_state = curr_state
 
 
     return loc_estimates, loc_predictions, head_estimates, head_predictions, SoG_estimates, SoG_predictions
