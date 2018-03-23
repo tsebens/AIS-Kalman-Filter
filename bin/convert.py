@@ -46,10 +46,16 @@ def knts_to_mps(knts):
 # Essentially make a state in which we must assume that the measured values are 100% accurate.
 def make_initial_state_from_deprecated_ais_data_format(data):
     state = make_state_from_deprecated_ais_data_format(data)
+    make_initial_state(state)
+    return state
+
+
+def make_initial_state(state):
     for var in (state.loc_state, state.head_state, state.SoG_state):
         var.est = var.meas
         var.pred = var.meas
     return state
+
 
 # Initialize a var state object from a ais data point
 # Remember, this will only initialize the MEASURED values
