@@ -32,7 +32,7 @@ def default_heading_prediction(loc_est=None, head_est=None, SoG_est=None, curr_s
 
 
 def default_location_prediction(loc_est=None, head_est=None, SoG_est=None, curr_state=None, prev_state=None):
-    if curr_state==None or prev_state==None:
+    if prev_state==None:
         loc_pred = np.add(loc_est, head_est * SoG_est)
     else:
         loc_pred = np.add(prev_state.loc_state.est, prev_state.head_state.est * prev_state.SoG_state.est)
