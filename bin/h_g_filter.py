@@ -38,61 +38,25 @@ def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
     loc_predictions, head_predictions, SoG_predictions, loc_estimates, head_estimates, SoG_estimates = [], [], [], [], [], []
     vessel_states = []
     # Populate our initial values
-    init = data[0]
     prev_state = make_init_state(data[0])
-    # loc_est is a vector of the form (x,y) or (lon, lat) that indicates the vessels current location in Alaska Albers coordinates
-    # head_est is a unit vector (length = 1) of the form (x,y) which indicates the vessel's current heading in Alaska Albers coordinates
-    # SoG is a vectorless float value indicating the vessels's speed in m/s
-    loc_est, head_est, SoG_est, prev_time = init[0], init[1], init[2], init[3]
     # Now, for every data point we have (skipping the first one since we've already loaded those values) we use the
     # Kalman filter to estimate the true location of our vessel.
     for row in data[1:]:
-        # These represent the values held by the data point we are currently considering
-        loc_meas, head_meas, SoG_meas, time_meas = row[0], row[1], row[2], row[3]
+        # These represent the measured values held by the data point we are currently considering
         curr_state = make_state(row)
-        # Next calculate how much time has passed since the last reading
-        calculate_seconds_passed(prev_time, time_meas)
 
         # Now we can make our predictions for location, heading, and SoG
-        # (x0, y0)+(xHead, yHead)*SoG*dt
-        # The previous location estimate plus the amount of distance they would cover at the estimated speed in the time
-        # that passed. Multiplied by the unit vector representing our estimated heading. Simple vector addition
-        loc_pred = pred_location_func(curr_state, prev_state)
         curr_state.loc_state.pred = pred_location_func(curr_state, prev_state)
-        head_pred = pred_heading_func(curr_state, prev_state)
         curr_state.head_state.pred = pred_heading_func(curr_state, prev_state)
-        SoG_pred = pred_SoG_func(curr_state, prev_state)
         curr_state.SoG_state.pred = pred_SoG_func(curr_state, prev_state)
 
-        # Log our predictions into their appropriate containers
-        loc_predictions.append(loc_pred)
-        head_predictions.append(head_pred)
-        SoG_predictions.append(SoG_pred)
-
         # Now that we have all of our predictions, we will compare them to our measurements, and create our new estimates.
-        loc_est = est_location_func(loc_fact, curr_state, prev_state)
-        curr_state.loc_state.est = loc_est
-        head_est = est_heading_func(head_fact, curr_state, prev_state)
-        curr_state.head_state.est = head_est
-        SoG_est = est_SoG_func(SoG_fact, curr_state, prev_state)
-        curr_state.SoG_state.est = SoG_est
-        # Log out estimates into their containers
-        loc_estimates.append(loc_est)
-        head_estimates.append(head_est)
-        SoG_estimates.append(SoG_est)
-        prev_time = time_meas  # Reset the time for the next iteration
+        curr_state.loc_state.est = est_location_func(loc_fact, curr_state, prev_state)
+        curr_state.head_state.est = est_heading_func(head_fact, curr_state, prev_state)
+        curr_state.SoG_state.est = est_SoG_func(SoG_fact, curr_state, prev_state)
         vessel_states.append(prev_state)
         prev_state = curr_state
-
-
-    return loc_estimates, loc_predictions, head_estimates, head_predictions, SoG_estimates, SoG_predictions
-
-
-def calculate_seconds_passed(prev_time, time_meas):
-    time_passed = time_meas - prev_time
-    seconds_passed = time_passed.total_seconds()  # Get the value in seconds. This will probably be useful. Someday. Hopefully.
-
-
+    return vessel_states
 
 
 
