@@ -1,5 +1,5 @@
 # Kalman filter
-from convert import make_state_from_deprecated_ais_data_format as make_state, make_initial_state_from_deprecated_ais_data_format as make_init_state
+from convert import make_initial_state, make_state_from_deprecated_ais_data_format as make_state
 from estimation import default_SoG_estimate, defalt_heading_estimate, default_location_estimate
 from prediction import default_SoG_prediction, default_heading_prediction, default_location_prediction
 
@@ -26,38 +26,56 @@ of the location, heading, and speed, based on the relevant previous values.
 By defining these as passed functions with default values, it becomes possible to inject the logi which 
 the filter uses to make it's predictions and estimates.
 '''
-def ais_kalman(data, loc_fact=0.5, head_fact=0.5, SoG_fact=0.5,
-                                        # Functions used to calculate filter predictions and estimates
-                                       est_location_func=default_location_estimate,
-                                        est_heading_func=defalt_heading_estimate,
-                                            est_SoG_func=default_SoG_estimate,
-                                      pred_location_func=default_location_prediction,
-                                       pred_heading_func=default_heading_prediction,
-                                           pred_SoG_func=default_SoG_prediction):
+def ais_kalman(data, filter_state):
+    pred_location, pred_heading, pred_SoG = init_prediction_functions(filter_state)
+    est_location, est_heading, est_SoG = init_estimation_function(filter_state)
     # Initialize our lists for storing the results of the filter
     loc_predictions, head_predictions, SoG_predictions, loc_estimates, head_estimates, SoG_estimates = [], [], [], [], [], []
     vessel_states = []
     # Populate our initial values
-    prev_state = make_init_state(data[0])
+    prev_state = make_initial_state(data[0])
     # Now, for every data point we have (skipping the first one since we've already loaded those values) we use the
     # Kalman filter to estimate the true location of our vessel.
-    for row in data[1:]:
-        # These represent the measured values held by the data point we are currently considering
-        curr_state = make_state(row)
-
+    for curr_state in data[1:]:
         # Now we can make our predictions for location, heading, and SoG
-        curr_state.loc_state.pred = pred_location_func(curr_state, prev_state)
-        curr_state.head_state.pred = pred_heading_func(curr_state, prev_state)
-        curr_state.SoG_state.pred = pred_SoG_func(curr_state, prev_state)
-
+        prediction_step(curr_state, filter_state, prev_state)
         # Now that we have all of our predictions, we will compare them to our measurements, and create our new estimates.
-        curr_state.loc_state.est = est_location_func(loc_fact, curr_state, prev_state)
-        curr_state.head_state.est = est_heading_func(head_fact, curr_state, prev_state)
-        curr_state.SoG_state.est = est_SoG_func(SoG_fact, curr_state, prev_state)
+        estimate_step(curr_state, filter_state, prev_state)
+        # Record the previous state of the vessel.
         vessel_states.append(prev_state)
+        # Reset the state variable for the next iteration
         prev_state = curr_state
     return vessel_states
 
 
+def estimate_step(curr_state, filter_state, prev_state):
+    curr_state.loc_state.est = filter_state.location_functions.estimate(
+        filter_state.factors.location_factor, curr_state, prev_state)
+    curr_state.head_state.est = filter_state.heading_functions.estimate(
+        filter_state.factors.heading_factor, curr_state, prev_state)
+    curr_state.SoG_state.est = filter_state.SoG_functions.estimate(
+        filter_state.factors.SoG_factor, curr_state, prev_state)
 
+
+def prediction_step(curr_state, filter_state, prev_state):
+    curr_state.loc_state.pred = filter_state.location_functions.predict(
+        curr_state, prev_state)
+    curr_state.head_state.pred = filter_state.heading_functions.predict(
+        curr_state, prev_state)
+    curr_state.SoG_state.pred = filter_state.SoG_functions.predict(
+        curr_state, prev_state)
+
+
+def init_prediction_functions(filter_state):
+    l_p = filter_state.location_functions.predict
+    h_p = filter_state.heading_functions.predict
+    s_p = filter_state.SoG_functions.predict
+    return l_p, h_p, s_p
+
+
+def init_estimation_function(filter_state):
+    l_e = filter_state.location_functions.estimate
+    h_e = filter_state.heading_functions.estimate
+    s_e = filter_state.SoG_functions.estimate
+    return l_e, h_e, s_e
 
