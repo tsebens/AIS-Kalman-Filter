@@ -1,2 +1,10 @@
 .idea/
 *.csv
+bin/__pycache__/timezones.cpython-36.pyc
+bin/__pycache__/state.cpython-36.pyc
+bin/__pycache__/plot.cpython-36.pyc
+bin/__pycache__/h_g_filter.cpython-36.pyc
+bin/__pycache__/estimation.cpython-36.pyc
+bin/__pycache__/convert.cpython-36.pyc
+bin/__pycache__/prediction.cpython-36.pyc
+bin/__pycache__/data.cpython-36.pyc
