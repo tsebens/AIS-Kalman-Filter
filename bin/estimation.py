@@ -1,5 +1,7 @@
 import numpy as np
 
+from convert import make_est_from_meas_pred_and_fact
+
 '''
 IMPORTANT: ALL FUNCTION GROUPS MUST HAVE THE SAME FUNCTION SIGNATURE
 All functions should have a uniform function signature, where all parameters have the same name, and the same order
@@ -23,17 +25,25 @@ def default_location_estimate(loc_fact=None, curr_state=None, prev_state=None):
 
 
 
-# TODO: Instantiate a rule that the SoG can't change by more than n knts in t seconds
 # Returns the SoG estimate, but caps the estimate under the rule that the vessel cannot gain more than
 # max_acc knts per second of acceleration. It is assumed that a boat can lose speed as quickly as it likes.
 def est_SoG_max_spd(SoG_fact, curr_state, prev_state, max_acc=0.5):
     time_passed = curr_state.timestamp - prev_state.timestamp
-    seconds_passed = time_passed.seconds_passed
-    max_spd_change = max_acc * seconds_passed
-    SoG_est = (1-SoG_fact) * curr_state.SoG_state.pred + curr_state.SoG_state.meas * SoG_fact
-    if SoG_est > prev_state.SoG_state.est + max_spd_change:
-        SoG_est = prev_state.SoG_state.est + max_spd_change
-    return SoG_est
+    max_spd_change = max_acc * time_passed.seconds_passed
 
-# TODO: Instantiate a rule that the heading cannot change by more than n degrees in t seconds
+    return min(
+        make_est_from_meas_pred_and_fact(curr_state.SoG_state.meas, curr_state.SoG_state.pred, SoG_fact),
+        prev_state.SoG_state.est + max_spd_change
+    )
+
+# Returns the heading estimate, but caps the estimate under the rule that the vessel cannot turn more than
+# max_turn degrees per second.
+def est_head_max_turn(head_fact, curr_state, prev_state, max_turn=5):
+    time_passed = curr_state.timestamp - prev_state.timestamp
+    max_head_change = max_turn * time_passed.seconds_passed
+    #TODO: Finish this function
+
+
+
+
 # TODO: Instantiate a rule that the location cannot change by more distance than SoG_est * seconds passed * 1.5 (just to be flexible).
