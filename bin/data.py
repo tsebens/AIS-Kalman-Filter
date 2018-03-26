@@ -1,111 +1,125 @@
-from datetime import timedelta, datetime
-from random import random
-import numpy as np
-import math
-import matplotlib.pyplot as plot
-
-from timezones import Alaska
-
-
-def sin_1_4th(x):
-    return math.sin(x/4)
-
-
-def noise(fact=1.0):
-    sign = -1
-    if random() > .5:
-        sign = 1
-    return sign*random()*fact # Returns a random value between -1.0 and 1.0 multiplied by the passed factor
-
+from random import randint
+from csv import DictReader, DictWriter
+from os import listdir
+from os.path import join
+from convert import lat_lon_to_loc_vector, true_heading_to_unit_vector, sog, ais_timestamp_to_datetime
 
 '''
-Generate semi noisy location ais_data based on a mathematical function
+----------------------------------------------------------------
+Constants
+----------------------------------------------------------------
 '''
-def gen_loc_data(base_func, noise_fact, n):
-    loc_data = []
-    for i in range(n):
-        x = i + noise(0.5)
-        base = base_func(x)
-        val = base + noise(noise_fact)
-        loc_data.append(np.array([x, val]))
-    return loc_data
+# The directory where all grouped ais data will be stored
+data_dir = r'C:\Users\tristan.sebens\Projects\AIS-Kalman-Filter\data'
 
-
+# The directory where all downloaded OrbComm AIS data can be found
+orbcomm_dir = r'C:\Users\tristan.sebens\Projects\OrbCommInterface\downloads'
 '''
-Generate semi noisy heading and SoG ais_data based on location ais_data
+----------------------------------------------------------------
 '''
-def gen_head_and_SoG_data_from_loc(loc_data, noise_fact=0.1, display_vectors=False):
-    prev = loc_data[0] # Get the initial state
-    headings = []
-    SoGs = []
-    for curr in loc_data[1:]: # Skip the first location, because we've already stored it in prev
-        delta_vector = np.subtract(curr, prev) # The exact change of location as a vector (curr-prev=delta)
-        # The SoG is equal to the magnitude of the delta_vector,
-        # and the heading is the unit vector form of the delta vector.
-        SoG = np.linalg.norm(delta_vector)
-        # Now we generate a 'noised' heading vector, which has been pushed in a random direction.
-        # The magnitude of the noise introduced to the heading is within +/- noise_fact of the delta-vector magnitude
-        # This ensures that the noise factor is always proportional to the delta-vector, no matter the heading's size.
-        heading_noise = np.array([noise(SoG*noise_fact), noise(SoG*noise_fact)])
-        # Now that we have both the delta-vector and the noise factor
-        heading = np.add(delta_vector, heading_noise) # First add the heading noise to the delta vector
-        heading = np.divide(heading, np.linalg.norm(heading)) # Then normalize the 'noised' heading vector into a unit vector
-        # Now that we have the heading, introduce some noise into the SoG
-        SoG = SoG + noise(SoG * noise_fact)  # Alter the SoG by +/- noise_fact of the original value
-        headings.append(heading)
-        SoGs.append(SoG)
-        if display_vectors:
-            plot_vectors(curr, prev, delta_vector, heading, heading_noise)
-        prev = curr # Reset the pointers for the next iteration
-    return headings, SoGs
 
-
-def plot_vectors(curr, prev, delta_vector, heading, heading_noise):
-    plot.scatter(curr[0], curr[1], color='r')
-    plot.scatter(prev[0], prev[1], color='b')
-    plot.pause(.5)
-    plot_delta_vector(curr, delta_vector)
-    plot_noise_vector(curr, heading_noise)
-    plot_heading_vector(curr, heading)
-
-
-def plot_heading_vector(curr, heading):
-    plot.axes().quiver(curr[0], curr[1], heading[0], heading[1], angles='xy', scale_units='xy', scale=1, color='b')
-    plot.pause(.5)
-
-
-def plot_noise_vector(curr, heading_noise):
-    plot.axes().quiver(curr[0], curr[1], heading_noise[0], heading_noise[1], angles='xy', scale_units='xy', scale=1,
-                       color='k')
-    plot.pause(.5)
-
-
-def plot_delta_vector(curr, delta_vector):
-    plot.axes().quiver(curr[0], curr[1], delta_vector[0], delta_vector[1], angles='xy', scale_units='xy', scale=1,
-                       color='g')
-    plot.pause(.5)
-
-
-'''
-Generate semi noisy ais ais_data, based on pre-generated location ais_data
-'''
-def gen_test_ais_data(loc_data, noise_fact=0.1):
-    head_data, sog_data = gen_head_and_SoG_data_from_loc(loc_data, noise_fact)
-    time = datetime.now(tz=Alaska)  # Grab the current time as a tz aware datetime object
+# Reads all ais data available in a directory and returns it as a single list of dicts
+def pull_ais_data_from_dir(d):
+    files = [join(d, f) for f in listdir(d)]
     ais_data = []
-    # We have to skip the last value, because there is exactly one fewer value for SoG and heading than there is for location
-    for i in range(len(loc_data) - 1):
-        ais_data.append(
-            (loc_data[i], head_data[i], sog_data[i], time)
-        )
-        time += timedelta(seconds=5)  # Add five seconds to the time, the average time distance of AIS data points
+    for fp in files:
+        ais_data.extend(pull_data_from_ais_csv(fp))
     return ais_data
 
 
-'''
-Generate semi noisy ais ais_data, complete with location, heading, and SoG measurements, based on a mathematical function
-'''
-def gen_random_data(b_func=sin_1_4th, noise_fact=0.2, num_points=100):
-    loc_data = gen_loc_data(b_func, noise_fact, num_points)
-    return gen_test_ais_data(loc_data, noise_fact)
+# Read all ais_data in a single csv file and return that ais_data as a list of dicts
+def pull_data_from_ais_csv(fp):
+    with open(fp) as file:
+        reader = DictReader(file)
+        ais_data = [row for row in reader]
+    return ais_data
 
+
+# Groups ais ais_data by it's MMSI ais_data. Returns a list of dicts. Each dict consists of a single key/value pair, where the
+# key is a given MMSI number, and the value is another list of dicts containing all of the AIS data points of that
+# MMSI number
+def group_ais_data_by_mmsi(ais_data):
+    mmsi_dict = {}
+    for row in ais_data:
+        if row['MMSI'] in mmsi_dict.keys():
+            mmsi_dict[row['MMSI']].append(row)
+        else:
+            mmsi_dict[row['MMSI']] = [row,]
+    return mmsi_dict
+
+
+# Record ais data which has been grouped by its MMSI values
+# Each unique MMSI number will have all data associated with it collected into a single file
+def record_grouped_ais_data(ais_data):
+    for mmsi in ais_data:
+        data = ais_data[mmsi]
+        out_fp = join(data_dir, mmsi + '.csv')
+        record_ais_data(data, out_fp)
+
+
+# Record all of the data contained in ais_data into a file at fp
+# ais_data must be a dict-list (essentially a db table)
+def record_ais_data(ais_data, fp):
+    fieldnames = ais_data[0].keys()
+    with open(fp, 'w', newline='') as file:
+        writer = DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(ais_data)
+
+
+# Retrieves all ais data from a specified directory
+def get_ais_data_from_dir(d):
+    ais_data = pull_ais_data_from_dir(d)
+    grouped = group_ais_data_by_mmsi(ais_data)
+    record_grouped_ais_data(grouped)
+
+
+# Retrieve any and all available AIS data from the OrbComm directory
+def get_ais_data_from_orbcomm():
+    get_ais_data_from_dir(orbcomm_dir)
+
+
+# Conversion function. Accepts raw AIS ais_data as provided by OrbComm and outputs the ais_data in the format specified and
+# expected by the kalman filter.
+def convert_ais_data_to_usable_form(fp):
+    with open(fp) as file:
+        reader = DictReader(file)
+        ais = [row for row in reader]
+    for point in ais:
+        loc = lat_lon_to_loc_vector(point)
+        heading = true_heading_to_unit_vector(point)
+        SoG = sog(point)
+        time = ais_timestamp_to_datetime(point['Date_time_stamp'])
+        # Yield the result of our formatting as a single data point in the format that the filter expects.
+        yield (loc, heading, SoG, time)
+
+
+# Order ais ais_data by timestamp, so that all ais_data points are in chronological order.
+# This function assumes that the incoming ais_data is unformatted ais_data from OrbComm
+def order_ais_data_by_ts(ais_data, ts_label='Date_time_stamp'):
+    # While sorting, each data point has its timestamp converted to a datetime object in situ for comparison
+    # This does not alter the recorded value for the point's timestamp. It remains in the OrbComm timestamp format.
+    return sorted(ais_data, key=lambda p: ais_timestamp_to_datetime(p[ts_label]))
+
+
+# Reorders an ais data csv file to be in chronological order
+# This turns out to not be necessary for data downloaded from OrbComm, as the points are already in order, even after
+# they are grouped by their MMSI numbers
+def reorder_ais_csv(fp):
+    with open(fp) as file:
+        reader = DictReader(file)
+        fieldnames = reader.fieldnames
+        data = [l for l in reader]
+    with open(fp, 'w', newline='') as file:
+        writer = DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(order_ais_data_by_ts(data))
+
+
+def get_rand_ais_data_point():
+    fps = [join(data_dir, f) for f in listdir(data_dir)]
+    fp = fps[randint(0, len(fps))]
+    with open(fp) as file:
+        reader = DictReader(file)
+        data = [row for row in reader]
+    return data[randint(0, len(data))]
