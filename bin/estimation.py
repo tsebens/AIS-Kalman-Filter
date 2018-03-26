@@ -1,6 +1,7 @@
 import numpy as np
 
 from calculate import angle_between, rotate_vector
+from configuration import MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND
 from convert import make_est_from_meas_pred_and_fact
 from state import VesselState
 
@@ -38,18 +39,18 @@ def est_SoG_max_spd(SoG_fact, curr_state, prev_state, max_acc=0.5):
         prev_state.SoG_state.est + max_spd_change
     )
 
-# Returns the heading estimate, but caps the estimate under the rule that the vessel cannot turn more than
-# max_turn degrees per second.
-def est_head_max_turn(head_fact, curr_state: VesselState, prev_state: VesselState, max_turn=5):
+
+# Estimate the new heading based on the prediction, and the measurement, but with the rule that the
+# heading can only change so fast.
+def est_head_max_turn(head_fact, curr_state: VesselState, prev_state: VesselState, max_turn=MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND):
     time_passed = curr_state.timestamp - prev_state.timestamp
     max_head_change = max_turn * time_passed.seconds_passed
     pred_heading = make_est_from_meas_pred_and_fact(curr_state.head_state.meas,
                                                     curr_state.head_state.pred,
                                                     head_fact)
-
+    # If the predicted heading would exceed the allowable heading change,
+    # then use the max heading change value instead
     if angle_between(prev_state.head_state.est, pred_heading) > max_head_change:
-        # If the predicted heading would exceed the allowable heading change,
-        # then use the max heading change value instead
         # This next part is actually sort of a work around. I don't know mathematically how to
         # derive the heading unit vector, because there are two possible values. I calculate
         # them both here, then determine which one is the better answer.
@@ -63,6 +64,7 @@ def est_head_max_turn(head_fact, curr_state: VesselState, prev_state: VesselStat
     else:
         # If we reach this point, then the predicted heading is within allowable tolerances.
         return pred_heading
+
 
 
 

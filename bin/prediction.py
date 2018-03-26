@@ -39,4 +39,3 @@ def SoG_prediction_max_spd(loc_est=None, head_est=None, SoG_est=None, max_spd=15
     return SoG_est if SoG_est < knts_to_mps(max_spd) else knts_to_mps(max_spd)
 
 
-

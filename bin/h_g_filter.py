@@ -17,9 +17,9 @@ def ais_kalman(data, filter_state: FilterState):
     # Kalman filter to estimate the true location of our vessel.
     for curr_state in data[1:]:
         # Now we can make our predictions for location, heading, and SoG
-        prediction_step(curr_state, filter_state, prev_state)
+        prediction_step(curr_state, prev_state, filter_state)
         # Now that we have all of our predictions, we will compare them to our measurements, and create our new estimates.
-        estimate_step(curr_state, filter_state, prev_state)
+        estimate_step(curr_state, prev_state, filter_state)
         # Record the previous state of the vessel.
         vessel_states.append(prev_state)
         # Reset the state variable for the next iteration
@@ -27,16 +27,15 @@ def ais_kalman(data, filter_state: FilterState):
     return vessel_states
 
 
-def estimate_step(curr_state, filter_state, prev_state):
-    curr_state.loc_state.est = filter_state.location_functions.estimate(
-        filter_state.factors.location_factor, curr_state, prev_state)
+def estimate_step(curr_state, prev_state, filter_state):
     curr_state.head_state.est = filter_state.heading_functions.estimate(
         filter_state.factors.heading_factor, curr_state, prev_state)
     curr_state.SoG_state.est = filter_state.SoG_functions.estimate(
         filter_state.factors.SoG_factor, curr_state, prev_state)
+    curr_state.loc_state.est = filter_state.location_functions.estimate(
+        filter_state.factors.location_factor, curr_state, prev_state)
 
-
-def prediction_step(curr_state, filter_state, prev_state):
+def prediction_step(curr_state, prev_state, filter_state):
     curr_state.loc_state.pred = filter_state.location_functions.predict(
         curr_state, prev_state)
     curr_state.head_state.pred = filter_state.heading_functions.predict(
