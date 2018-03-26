@@ -1,5 +1,6 @@
 import numpy as np
 
+from configuration import MAX_ALLOWABLE_VESSEL_SPEED
 from convert import knts_to_mps
 
 '''
@@ -35,7 +36,7 @@ def default_location_prediction(curr_state, prev_state):
 Custom behaviour prediction functions
 '''
 # Enforces a strict rule that the estimated SoG of the vessel cannot exceed max_spd knots
-def SoG_prediction_max_spd(loc_est=None, head_est=None, SoG_est=None, max_spd=15):
+def SoG_prediction_max_spd(loc_est=None, head_est=None, SoG_est=None, max_spd=MAX_ALLOWABLE_VESSEL_SPEED):
     return SoG_est if SoG_est < knts_to_mps(max_spd) else knts_to_mps(max_spd)
 
 
