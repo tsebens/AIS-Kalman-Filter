@@ -32,7 +32,7 @@ def default_location_estimate(loc_fact=None, curr_state=None, prev_state=None):
 # max_acc knts per second of acceleration. It is assumed that a boat can lose speed as quickly as it likes.
 def est_SoG_max_spd(SoG_fact, curr_state, prev_state, max_acc=0.5):
     time_passed = curr_state.timestamp - prev_state.timestamp
-    max_spd_change = max_acc * time_passed.seconds_passed
+    max_spd_change = max_acc * time_passed.total_seconds()
 
     return min(
         make_est_from_meas_pred_and_fact(curr_state.SoG_state.meas, curr_state.SoG_state.pred, SoG_fact),
@@ -44,7 +44,7 @@ def est_SoG_max_spd(SoG_fact, curr_state, prev_state, max_acc=0.5):
 # heading can only change so fast.
 def est_head_max_turn(head_fact, curr_state: VesselState, prev_state: VesselState, max_turn=MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND):
     time_passed = curr_state.timestamp - prev_state.timestamp
-    max_head_change = max_turn * time_passed.seconds_passed
+    max_head_change = max_turn * time_passed.total_seconds()
     pred_heading = make_est_from_meas_pred_and_fact(curr_state.head_state.meas,
                                                     curr_state.head_state.pred,
                                                     head_fact)
