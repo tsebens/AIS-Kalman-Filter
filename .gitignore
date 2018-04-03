@@ -10,3 +10,4 @@ bin/__pycache__/prediction.cpython-36.pyc
 bin/__pycache__/data.cpython-36.pyc
 bin/__pycache__/configuration.cpython-36.pyc
 bin/__pycache__/calculate.cpython-36.pyc
+bin/evaluate.py
