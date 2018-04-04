@@ -1,8 +1,6 @@
 '''
 Collection of value objects meant to provide some structure to the values used in the filter.
 '''
-
-
 # Value object that holds the state of a particular vessel variable (location, heading, speed over ground)
 class VarState:
     def __init__(self, meas=None, pred=None, est=None):
