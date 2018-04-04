@@ -3,7 +3,7 @@ from data import convert_ais_data_to_usable_form, convert_vsm_data_to_states, re
 from gen import gen_random_data, sin_1_4th
 from estimation import default_location_estimate, est_head_max_turn, est_SoG_max_spd, default_SoG_estimate, \
     default_heading_estimate
-from h_g_filter import ais_kalman
+from filter import ais_kalman
 from plot import make_iterative_plot
 from prediction import default_SoG_prediction, default_heading_prediction, default_location_prediction
 from state import FactorState, FilterState, FunctionState
@@ -22,8 +22,6 @@ location_functions = FunctionState(
     predict=default_location_prediction,
     estimate=default_location_estimate
 )
-
-
 
 heading_functions = FunctionState(
     predict=default_heading_prediction,
