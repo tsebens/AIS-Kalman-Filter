@@ -1,8 +1,12 @@
+import warnings
+
 import numpy as np
+
 
 def unit_vector(vector):
     """ Returns the unit vector of the vector.  """
     return vector / np.linalg.norm(vector)
+
 
 def angle_between(v1, v2):
     """ Returns the angle in degrees between vectors 'v1' and 'v2'"""
@@ -10,9 +14,21 @@ def angle_between(v1, v2):
     v2_u = unit_vector(v2)
     return np.degrees(np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0)))
 
+
 def rotate_vector(v1, deg):
     theta = np.radians(deg)
     c, s = np.cos(theta), np.sin(theta)
     R = np.array(((c, -s), (s, c)))
     v2 = np.matmul(R, v1)
     return v2
+
+
+# Returns the vector pointing from p1 to p2
+def vector_between_two_points(p1, p2):
+    res = np.subtract(p1, p2)
+    return res
+
+
+# Return the length of a vector
+def vector_length(v1):
+    return np.linalg.norm(v1)
