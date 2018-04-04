@@ -29,11 +29,11 @@ def ais_kalman(data, filter_state: FilterState):
 
 def estimate_step(curr_state, prev_state, filter_state):
     curr_state.head_state.est = filter_state.heading_functions.estimate(
-        filter_state.factors.heading_factor, curr_state, prev_state)
+        filter_state, curr_state, prev_state)
     curr_state.SoG_state.est = filter_state.SoG_functions.estimate(
-        filter_state.factors.SoG_factor, curr_state, prev_state)
+        filter_state, curr_state, prev_state)
     curr_state.loc_state.est = filter_state.location_functions.estimate(
-        filter_state.factors.location_factor, curr_state, prev_state)
+        filter_state, curr_state, prev_state)
 
 def prediction_step(curr_state, prev_state, filter_state):
     curr_state.loc_state.pred = filter_state.location_functions.predict(

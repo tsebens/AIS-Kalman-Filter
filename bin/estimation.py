@@ -3,7 +3,13 @@ import numpy as np
 from calculate import angle_between, rotate_vector
 from configuration import MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND
 from convert import make_est_from_meas_pred_and_fact
-from state import VesselState
+from state import VesselState, FilterState
+
+'''
+The estimation step is where we combine what we predicted about the state of the vessel with what we measured, and do so 
+in an intelligent and intentional manner.
+'''
+
 
 '''
 IMPORTANT: ALL FUNCTION GROUPS MUST HAVE THE SAME FUNCTION SIGNATURE
@@ -15,15 +21,18 @@ have the relevant parameters overridden
 '''
 The default functions for estimating 
 '''
-def default_SoG_estimate(SoG_fact=None, curr_state=None, prev_state=None):
+def default_SoG_estimate(filter_state: FilterState=None, curr_state: VesselState=None, prev_state: VesselState=None):
+    SoG_fact = filter_state.factors.SoG_factor
     return (1 - SoG_fact) * curr_state.SoG_state.pred + SoG_fact * curr_state.SoG_state.meas
 
 
-def defalt_heading_estimate(head_fact=None, curr_state=None, prev_state=None):
+def default_heading_estimate(filter_state: FilterState=None, curr_state: VesselState=None, prev_state: VesselState=None):
+    head_fact = filter_state.factors.heading_factor
     return np.add((1 - head_fact) * curr_state.head_state.pred, head_fact * curr_state.head_state.meas)
 
 
-def default_location_estimate(loc_fact=None, curr_state=None, prev_state=None):
+def default_location_estimate(filter_state: FilterState=None, curr_state: VesselState=None, prev_state: VesselState=None):
+    loc_fact = filter_state.factors.location_factor
     return np.add((1 - loc_fact) * curr_state.loc_state.pred, loc_fact * curr_state.loc_state.meas)
 
 
@@ -65,8 +74,6 @@ def est_head_max_turn(head_fact, curr_state: VesselState, prev_state: VesselStat
         # If we reach this point, then the predicted heading is within allowable tolerances.
         return pred_heading
 
-
-
-
-
-# TODO: Instantiate a rule that the location cannot change by more distance than SoG_est * seconds passed * 1.5 (just to be flexible).
+# TODO: Instantiate a rule that the location cannot change by more distance than SoG_est * seconds passed * 1.5 (just to be flexible).'
+def est_loc_max_dis():
+    pass
