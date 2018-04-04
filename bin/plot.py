@@ -53,23 +53,29 @@ Same as make_plot, but it plots the point in a step by step manner
 
 If b_func is defined, the system will plot the base function as a green dotted line behind the other plots.
 '''
-def make_iterative_plot(loc_states, b_func=None, delay=0.5):
-    loc_data = [state.meas for state in loc_states]
-    loc_preds = [state.pred for state in loc_states]
-    loc_ests = [state.est for state in loc_states]
+def make_iterative_plot(v_states, b_func=None, delay=0):
     plot.grid()
-    if b_func != None:
-        b_vals = [(point[0], b_func(point[0])) for point in loc_data]
-    for i in range(len(loc_data)-1):
-        curr_loc_data = loc_data[:i]
-        curr_loc_preds = loc_preds[:i]
-        curr_loc_ests = loc_ests[:i]
+    if delay == 0:
+        curr_loc_data = [state.loc_state.meas for state in v_states]
+        curr_loc_preds = [state.loc_state.pred for state in v_states]
+        curr_loc_ests = [state.loc_state.est for state in v_states]
         if b_func != None:
+            b_vals = [b_func(state.meas[0]) for state in v_states]
             curr_b_vals = b_vals[:i]
             plot_b_func(curr_b_vals)
         make_plot(curr_loc_data, curr_loc_preds, curr_loc_ests)
-
-        plot.pause(delay)
+    else:
+        for i in range(len(v_states) - 1):
+            curr_loc_data = [state.loc_state.meas for state in v_states][:i]
+            curr_loc_preds = [state.loc_state.pred for state in v_states][:i]
+            curr_loc_ests = [state.loc_state.est for state in v_states][:i]
+            if b_func != None:
+                b_vals = [b_func(state.meas[0]) for state in v_states]
+                curr_b_vals = b_vals[:i]
+                plot_b_func(curr_b_vals)
+            make_plot(curr_loc_data, curr_loc_preds, curr_loc_ests)
+            plot.pause(delay)
+    plot.show()
 
 def make_comparison_plot(loc_data, loc_estimates, loc_predictions, head_data, head_estimates, head_predicitions, func):
     plot.grid()
