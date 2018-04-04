@@ -1,7 +1,7 @@
 # Logic class for any conversions that need to be made
 from math import tan, radians
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from state import VarState, VesselState
 from timezones import UTC
@@ -66,4 +66,9 @@ def make_state_from_deprecated_ais_data_format(data):
     return VesselState(loc_state=loc_state, head_state=head_state, SoG_state=SoG_state, timestamp=data[3])
 
 def make_est_from_meas_pred_and_fact(meas, pred, fact):
-    return (1-fact)*pred+fact*meas
+    return np.add((1-fact)*pred, fact*meas)
+
+
+def seconds_passed(curr_state:VesselState, prev_state:VesselState):
+    time_passed = curr_state.timestamp - prev_state.timestamp
+    return time_passed.total_seconds()
