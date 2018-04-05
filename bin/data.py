@@ -7,8 +7,9 @@ from os.path import join, split
 import numpy as np
 
 from calculate import vector_between_two_points, vector_length, unit_vector
-from convert import lat_lon_to_loc_vector, true_heading_to_unit_vector, sog, ais_timestamp_to_datetime, \
-    make_initial_state
+from convert import lat_lon_to_loc_vector, true_heading_to_unit_vector, ais_sog, ais_timestamp_to_datetime, \
+    make_initial_state, knts_to_mps, seconds_passed_between_datetimes
+from project import convert_loc_to_aa
 from state import VesselState, VarState
 from timezones import UTC
 
@@ -94,9 +95,10 @@ def convert_ais_data_to_usable_form(fp):
         reader = DictReader(file)
         ais = [row for row in reader]
     for point in ais:
-        loc = lat_lon_to_loc_vector(point, lat_fn='LATITUDE', lon_fn='LONGITUDE')
+        loc = lat_lon_to_loc_vector(point)
         heading = true_heading_to_unit_vector(point, head_fn='AVERAGE_BEARING')
-        SoG = sog(point)
+        # AIS SOG data comes in knots. We want mps
+        SoG = knts_to_mps(ais_sog(point))
         time = ais_timestamp_to_datetime(point['Date_time_stamp'])
         # Yield the result of our formatting as a single data point in the format that the filter expects.
         yield (loc, heading, SoG, time)
@@ -140,6 +142,11 @@ def get_rand_ais_data_point():
 def get_loc_from_vms(row, lat_fn: str='LATITUDE', lon_fn: str='LONGITUDE'):
     lat = float(row[lat_fn])
     lon = float(row[lon_fn])
+    lon, lat = convert_loc_to_aa(lon, lat)
+    # VMS data is recorded in regular old geographic coordinates (ESPG:4326)
+    # We want it in Alaska Albers, both because AA is measured in meters (works well for speed)
+    # AND because AA is an equal-area conic projection, meaning we wont see any distortion of unit
+    # lengths based on our latitude. Or at least not much.
     return np.array([lon, lat])
 
 
@@ -152,7 +159,12 @@ def get_head_from_vms(curr_row, prev_row, lat_fn='LATITUDE', lon_fn='LONGITUDE')
 def get_SoG_from_vms(curr_row, prev_row, lat_fn: str ='LATITUDE', lon_fn: str ='LONGITUDE'):
     prev_loc = get_loc_from_vms(curr_row, lat_fn=lat_fn, lon_fn=lon_fn)
     curr_loc = get_loc_from_vms(prev_row, lat_fn=lat_fn, lon_fn=lon_fn)
-    return vector_length(vector_between_two_points(prev_loc, curr_loc))
+    # Since the location of the vessel is measured in meters, all we have to do is divide the
+    # delta vector by the time it took to travers it to get the measured speed
+    ts1 = get_timestamp_from_vms(curr_row)
+    ts2 = get_timestamp_from_vms(prev_row)
+    time_passed = seconds_passed_between_datetimes(ts1, ts2)
+    return vector_length(vector_between_two_points(prev_loc, curr_loc))/time_passed
 
 
 # Convert a timestamp of the format 1/1/2010 0:33 to a datetime object
