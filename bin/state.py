@@ -20,7 +20,7 @@ class VesselState:
 
 # Value object to hold the various factors used during the filter's processing
 class FactorState:
-    def __init__(self, loc_fact: float = 1.0, head_fact: float = 1.0, SoG_fact: float = 1.0):
+    def __init__(self, loc_fact:float=1.0, head_fact:float=1.0, SoG_fact:float=1.0):
         self.location_factor = loc_fact
         self.heading_factor = head_fact
         self.SoG_factor = SoG_fact
@@ -45,11 +45,3 @@ class FilterState:
         self.location_functions = loc_function_state
         self.heading_functions = head_function_state
         self.SoG_functions = SoG_function_state
-
-
-
-
-
-
-
-
