@@ -1,5 +1,4 @@
-import warnings
-
+from math import fabs
 import numpy as np
 
 
@@ -8,14 +7,18 @@ def unit_vector(vector):
     return vector / np.linalg.norm(vector)
 
 
-def angle_between(v1, v2):
+def angle_between(v1, v2, abs=True):
     """ Returns the angle in degrees between vectors 'v1' and 'v2'"""
     v1_u = unit_vector(v1)
     v2_u = unit_vector(v2)
-    return np.degrees(np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0)))
+    ang = np.degrees(np.arccos(np.clip(np.dot(v1_u, v2_u), -1.0, 1.0)))
+    if abs:
+        ang = fabs(ang)
+    return ang
 
 
 def rotate_vector(v1, deg):
+    """Rotate the given vector by deg degrees counter-clockwise"""
     theta = np.radians(deg)
     c, s = np.cos(theta), np.sin(theta)
     R = np.array(((c, -s), (s, c)))
