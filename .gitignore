@@ -12,3 +12,8 @@ bin/__pycache__/configuration.cpython-36.pyc
 bin/__pycache__/calculate.cpython-36.pyc
 bin/evaluate.py
 bin/__pycache__/gen.cpython-36.pyc
+diagrams/introduced_artefact_max_spd_head_per_sec_filters.png
+diagrams/introduced_artefact_max_spd_head_dis_per_sec_filters2.png
+diagrams/introduced_artefact_default_filters.png
+bin/__pycache__/project.cpython-36.pyc
+diagrams/introduced_artefact_max_spd_head_dis_per_sec_filters.png
