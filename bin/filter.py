@@ -22,6 +22,7 @@ def ais_kalman(data, filter_state: FilterState):
         estimate_step(curr_state, prev_state, filter_state)
         # Record the previous state of the vessel.
         vessel_states.append(prev_state)
+        yield prev_state
         # Reset the state variable for the next iteration
         prev_state = curr_state
     return vessel_states

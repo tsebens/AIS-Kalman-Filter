@@ -1,7 +1,6 @@
 import numpy as np
 
-from configuration import MAX_ALLOWABLE_VESSEL_SPEED
-from convert import knts_to_mps, seconds_passed_between_states
+from convert import seconds_passed_between_states
 
 '''
 The prediction step is where you predict what the state of the vessel WILL BE, based on what you know about the boat in 

@@ -1,6 +1,5 @@
 # Projection logic
 from pyproj import Proj
-import numpy as np
 
 aa_projection_init = "epsg:3338" # The epsg for Alaska Albers equal area conic
 proj_aa = Proj(init=aa_projection_init) # Initiate a projection from cartographic coordinates to Alaska Albers

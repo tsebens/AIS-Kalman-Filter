@@ -2,13 +2,13 @@ from datetime import datetime
 from random import randint
 from csv import DictReader, DictWriter
 from os import listdir
-from os.path import join, split
+from os.path import join
 
 import numpy as np
 
 from calculate import vector_between_two_points, vector_length, unit_vector
 from convert import lat_lon_to_loc_vector, true_heading_to_unit_vector, ais_sog, ais_timestamp_to_datetime, \
-    make_initial_state, knts_to_mps, seconds_passed_between_datetimes
+    knts_to_mps, seconds_passed_between_datetimes
 from project import convert_loc_to_aa
 from state import VesselState, VarState
 from timezones import UTC
@@ -126,6 +126,7 @@ def reorder_ais_csv(fp):
         writer.writerows(order_ais_data_by_ts(data))
 
 
+# Returns a single random AIS point from the the AIS data directory
 def get_rand_ais_data_point():
     fps = [join(data_dir, f) for f in listdir(data_dir)]
     fp = fps[randint(0, len(fps))]
@@ -139,7 +140,7 @@ def get_rand_ais_data_point():
 # Everything that isn't relevant can be stored in a sub-object called 'junk' or something.
 
 
-def get_loc_from_vms(row, lat_fn: str='LATITUDE', lon_fn: str='LONGITUDE'):
+def get_loc_from_vms(row, lat_fn: str='latitude', lon_fn: str='longitude'):
     lat = float(row[lat_fn])
     lon = float(row[lon_fn])
     lon, lat = convert_loc_to_aa(lon, lat)
@@ -150,13 +151,13 @@ def get_loc_from_vms(row, lat_fn: str='LATITUDE', lon_fn: str='LONGITUDE'):
     return np.array([lon, lat])
 
 
-def get_head_from_vms(curr_row, prev_row, lat_fn='LATITUDE', lon_fn='LONGITUDE'):
+def get_head_from_vms(curr_row, prev_row, lat_fn='latitude', lon_fn='longitude'):
     prev_loc = get_loc_from_vms(curr_row, lat_fn=lat_fn, lon_fn=lon_fn)
     curr_loc = get_loc_from_vms(prev_row, lat_fn=lat_fn, lon_fn=lon_fn)
     return unit_vector(vector_between_two_points(prev_loc, curr_loc))
 
 
-def get_SoG_from_vms(curr_row, prev_row, lat_fn: str ='LATITUDE', lon_fn: str ='LONGITUDE'):
+def get_SoG_from_vms(curr_row, prev_row, lat_fn: str ='latitude', lon_fn: str ='longitude'):
     prev_loc = get_loc_from_vms(curr_row, lat_fn=lat_fn, lon_fn=lon_fn)
     curr_loc = get_loc_from_vms(prev_row, lat_fn=lat_fn, lon_fn=lon_fn)
     # Since the location of the vessel is measured in meters, all we have to do is divide the
@@ -168,7 +169,10 @@ def get_SoG_from_vms(curr_row, prev_row, lat_fn: str ='LATITUDE', lon_fn: str ='
 
 
 # Convert a timestamp of the format 1/1/2010 0:33 to a datetime object
-def make_timestamp_from_vms_value(timestamp: str):
+def make_timestamp_from_vms_value(timestamp):
+    if type(timestamp) == datetime:
+        # If the data has been read frm a database, then it will already be in datetime
+        return timestamp
     date, time = timestamp.split(' ')
     month, day, year = date.split('/')
     hour, minute = time.split(':')
