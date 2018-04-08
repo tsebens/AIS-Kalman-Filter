@@ -72,3 +72,4 @@ def seconds_passed_between_states(curr_state:VesselState, prev_state:VesselState
 def seconds_passed_between_datetimes(dt1: datetime, dt2: datetime):
     dv = dt1 - dt2
     return dv.total_seconds()
+    
