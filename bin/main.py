@@ -1,3 +1,4 @@
+from connect import get_states_from_table_data
 from data import convert_vsm_data_to_states
 from estimation import est_head_max_turn_per_sec, est_SoG_max_spd_per_sec, est_loc_max_dis
 from filter import ais_kalman
@@ -34,11 +35,10 @@ filter_state = FilterState(
     SoG_functions
 )
 
-fp = r'C:\Users\tristan.sebens\Projects\AIS-Kalman-Filter\ais_data\test_vms_data.csv'
 print('Converting data to states')
-states = convert_vsm_data_to_states(fp)
+states = get_states_from_table_data('vms_test_voyage')
 print('Running filter')
-ais_kalman(states[1:], filter_state)
+vessel_states = ais_kalman(states[1:], filter_state)
 print('Making plot')
 make_iterative_plot(vessel_states, delay=0.000000001)
 input('Press enter')

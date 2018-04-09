@@ -1,6 +1,6 @@
 # Kalman filter
 from convert import make_initial_state
-from state import FilterState
+from state import FilterState, VesselState, VarState
 
 '''
 Executes a Kalman filter on the passed ais_data and returns a list of estimates for location(lat/lon), heading, and SoG for every point in ais_data after the first.
@@ -22,13 +22,13 @@ def ais_kalman(data, filter_state: FilterState):
         estimate_step(curr_state, prev_state, filter_state)
         # Record the previous state of the vessel.
         vessel_states.append(prev_state)
-        yield prev_state
+        # yield prev_state # Implement this later. Make the filter into a generator, rather than a list-to-list conversion
         # Reset the state variable for the next iteration
         prev_state = curr_state
     return vessel_states
 
 
-def estimate_step(curr_state, prev_state, filter_state):
+def estimate_step(curr_state: VesselState, prev_state: VesselState, filter_state: FilterState):
     curr_state.head_state.est = filter_state.heading_functions.estimate(
         filter_state, curr_state, prev_state)
     curr_state.SoG_state.est = filter_state.SoG_functions.estimate(
@@ -36,7 +36,8 @@ def estimate_step(curr_state, prev_state, filter_state):
     curr_state.loc_state.est = filter_state.location_functions.estimate(
         filter_state, curr_state, prev_state)
 
-def prediction_step(curr_state, prev_state, filter_state):
+
+def prediction_step(curr_state: VesselState, prev_state: VesselState, filter_state: FilterState):
     curr_state.loc_state.pred = filter_state.location_functions.predict(
         curr_state, prev_state)
     curr_state.head_state.pred = filter_state.heading_functions.predict(
