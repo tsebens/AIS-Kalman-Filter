@@ -30,52 +30,13 @@ orbcomm_dir = r'C:\Users\tristan.sebens\Projects\OrbCommInterface\downloads'
 ----------------------------------------------------------------
 '''
 
+
+
 class UseOfAbstractDataPackageMetaException(Exception):
     pass
 
-
-# TODO: Do I need this? Seems like a Java structure in a Python script
-class DataPackageMeta:
-    '''
-    Create a VesselState object from two rows of data
-    '''
-    def make_state(self, curr_row: OrderedDict, prev_row: OrderedDict):
-        '''These methods shouldn't be used, as they should be overriden by the child implementation that is passed to the DataPackage'''
-        raise UseOfAbstractDataPackageMetaException(
-            'Attempted to use the abstract form of the DataPackage object\'s make_state method. Must use a child form of the class'
-            )
-
-
-    '''
-    Create the first state. Since there is no preceding state, the creation of this state is a little different. 
-    We must assume that it is completely accurate.
-    '''
-    def make_init_state(self, init_row):
-        '''These methods shouldn't be used, as they should be overriden by the child implementation that is passed to the DataPackage'''
-        raise UseOfAbstractDataPackageMetaException(
-            'Attempted to use the abstract form of the DataPackage object\'s make_init_state method. Must use a child form of the class'
-        )
-
-
-class VMSDataPackageMeta(DataPackageMeta):
-    def make_state(self, curr_row, prev_row):
-        return make_vessel_state_from_vms_rows(curr_row, prev_row)
-
-    def make_init_state(self, init_row):
-        return make_init_state_from_vms(init_row)
-
-
-class AISDataPackageMeta(DataPackageMeta):
-    def make_state(self, curr_row, prev_row):
-        return make_vessel_state_from_ais_rows(curr_row, prev_row)
-
-    def make_init_state(self, init_row):
-        return make_vessel_state_from_ais_rows(init_row, None)
-
-
-class DataPackage:
-    def __init__(self, meta: DataPackageMeta, in_tbl_conn: TableConnection):
-        self.meta = meta
+class DataPackageBase:
+    def __init__(self, in_tbl_conn: TableConnection):
         self.payload = None
         self.in_tbl_conn = in_tbl_conn
 
@@ -95,10 +56,33 @@ class DataPackage:
     def get_states(self):
         payload_gen = self.get_payload()
         prev_row = payload_gen.__next__()
-        yield self.meta.make_init_state(self.meta, prev_row)
+        yield self.make_init_state(prev_row)
         for curr_row in payload_gen:
-            yield self.meta.make_state(self.meta, curr_row, prev_row)
+            yield self.make_state(curr_row, prev_row)
             prev_row = curr_row
+
+    def make_state(self, curr_row, prev_row):
+        raise UseOfAbstractDataPackageMetaException('Attempted to use abstract version of make_state. Must use a child class')
+
+
+    def make_init_state(self, init_row):
+        raise UseOfAbstractDataPackageMetaException('Attempted to use abstract version of make_init_state. Must use a child class')
+
+
+class VMSDataPackage(DataPackageBase):
+    def make_state(self, curr_row, prev_row):
+        return make_vessel_state_from_vms_rows(curr_row, prev_row)
+
+    def make_init_state(self, init_row):
+        return make_init_state_from_vms(init_row)
+
+
+class AISDataPackage(DataPackageBase):
+    def make_state(self, curr_row, prev_row):
+        return make_vessel_state_from_ais_rows(curr_row, prev_row)
+
+    def make_init_state(self, init_row):
+        return make_vessel_state_from_ais_rows(init_row, None)
 
 
 # TODO: The following function needs to be updated with the correct configuration for AIS data files
