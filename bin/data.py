@@ -30,20 +30,27 @@ orbcomm_dir = r'C:\Users\tristan.sebens\Projects\OrbCommInterface\downloads'
 ----------------------------------------------------------------
 '''
 
-
-
-class UseOfAbstractDataPackageMetaException(Exception):
+class NoTableConnectionSpecified(Exception):
     pass
 
+
+class UseOfAbstractForm(Exception):
+    pass
+
+
+# TODO: Still needs a fair amount of work ironing out the data loading process.
 class DataPackageBase:
-    def __init__(self, in_tbl_conn: TableConnection):
+    def __init__(self, in_tbl_conn: TableConnection=None, out_tbl_conn=None):
         self.payload = None
         self.in_tbl_conn = in_tbl_conn
+        self.out_tbl_conn = out_tbl_conn
 
     # Loads the DataPackage with all of the data from the DB table
     def load_payload(self):
         # TODO: In the future, this should set the payload as a generator supplied by the TableConnection
         # The generator should in turn reference a buffered generator from within the TableConnection
+        if self.in_tbl_conn is None:
+            raise NoTableConnectionSpecified('Attempted to load data into DataPackage, but no TableConnection has been specified.')
         self.payload = self.in_tbl_conn.get_data()
 
     # Returns the values of the payload as a generator of OrderedDicts
