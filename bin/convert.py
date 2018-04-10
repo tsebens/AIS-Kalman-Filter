@@ -7,9 +7,11 @@ from configuration import knts_to_mps_conv_fact
 from state import VarState, VesselState
 from timezones import UTC
 
+
+# TODO: Review this function. Is this correct?
 # Converts a true heading to a unit vector
-def true_heading_to_unit_vector(point, head_fn='True_heading'):
-    unit_v = np.array([1, tan(radians(float(point[head_fn])))])
+def true_heading_to_unit_vector(heading):
+    unit_v = np.array([1, tan(radians(heading))])
     mag = np.linalg.norm(unit_v)
     unit_v = unit_v/mag
     unit_v = np.array([unit_v[1], unit_v[0]])
