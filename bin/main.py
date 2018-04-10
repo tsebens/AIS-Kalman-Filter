@@ -1,10 +1,17 @@
-from connect import get_states_from_table_data
-from data import convert_vsm_data_to_states
-from estimation import est_head_max_turn_per_sec, est_SoG_max_spd_per_sec, est_loc_max_dis
+from connect import TableConnection
+from data import VMSDataPackage
+from estimation import est_head_max_turn_per_sec, est_SoG_max_spd_per_sec, est_loc_max_dis, est_head_max_turn
 from filter import ais_kalman
 from plot import make_iterative_plot
 from prediction import default_SoG_prediction, default_heading_prediction, default_location_prediction
 from state import FactorState, FilterState, FunctionState
+
+driver = '{PostgreSQL Unicode(x64)}'
+server = 'localhost'
+port = '5433'
+dbname = 'ais_kalman'
+user = 'postgres'
+pwd = 'postgres'
 
 
 factor_state = FactorState(
@@ -35,10 +42,14 @@ filter_state = FilterState(
     SoG_functions
 )
 
+table_conn = TableConnection('vms_test_voyage', driver, server, port, dbname, user, pwd)
+table_conn.init_connection()
 print('Converting data to states')
-states = get_states_from_table_data('vms_test_voyage')
+data_package = VMSDataPackage(table_conn)
+print('Loading data from DB')
+data_package.load_payload()
 print('Running filter')
-vessel_states = ais_kalman(states[1:], filter_state)
+vessel_states = ais_kalman(data_package.get_states(), filter_state)
 print('Making plot')
 make_iterative_plot(vessel_states, delay=0.000000001)
 input('Press enter')
