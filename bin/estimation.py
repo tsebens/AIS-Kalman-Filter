@@ -1,8 +1,7 @@
-import numpy as np
-
 from calculate import angle_between, rotate_vector, vector_between_two_points, vector_length
-from configuration import MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND, MAX_ALLOWABLE_VESSEL_ACCELERATION_KNTS_PER_SECOND
-from convert import make_est_from_meas_pred_and_fact, seconds_passed
+from configuration import MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND, \
+    MAX_ALLOWABLE_VESSEL_ACCELERATION_METERS_PER_SECOND, MAX_ALLOWABLE_TURN_PER_STATE
+from convert import make_est_from_meas_pred_and_fact, seconds_passed_between_states
 from state import VesselState, FilterState
 
 '''
@@ -45,8 +44,7 @@ def default_location_estimate(filter_state: FilterState, curr_state: VesselState
 
 # Returns the SoG estimate, but caps the estimate under the rule that the vessel cannot gain more than
 # max_acc knts per second of acceleration. It is assumed that a boat can lose speed as quickly as it likes.
-def est_SoG_max_spd(filter_state:FilterState, curr_state:VesselState, prev_state:VesselState, max_acc=MAX_ALLOWABLE_VESSEL_ACCELERATION_KNTS_PER_SECOND):
-    SoG_fact = filter_state.factors.SoG_factor
+def est_SoG_max_spd_per_sec(filter_state:FilterState, curr_state:VesselState, prev_state:VesselState, max_acc=MAX_ALLOWABLE_VESSEL_ACCELERATION_METERS_PER_SECOND):
     time_passed = curr_state.timestamp - prev_state.timestamp
     max_spd_change = max_acc * time_passed.total_seconds()
 
@@ -58,8 +56,8 @@ def est_SoG_max_spd(filter_state:FilterState, curr_state:VesselState, prev_state
 
 # Estimate the new heading based on the prediction, and the measurement, but with the rule that the
 # heading can only change so fast.
-def est_head_max_turn(filter_state:FilterState, curr_state:VesselState, prev_state:VesselState, max_turn=MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND):
-    total_seconds = seconds_passed(curr_state, prev_state)
+def est_head_max_turn_per_sec(filter_state:FilterState, curr_state:VesselState, prev_state:VesselState, max_turn=MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND):
+    total_seconds = seconds_passed_between_states(curr_state, prev_state)
     max_head_change = max_turn * total_seconds
     # First we make our usual estimate, then we compare that to our rules.
     pred_heading = default_heading_estimate(filter_state, curr_state, prev_state)
@@ -80,8 +78,13 @@ def est_head_max_turn(filter_state:FilterState, curr_state:VesselState, prev_sta
         # If we reach this point, then the predicted heading is within allowable tolerances.
         return pred_heading
 
-# TODO: Instantiate a rule that the location cannot change by more distance than SoG_est * seconds passed * 1.5 (just to be flexible).'
-def est_loc_max_dis(filter_state:FilterState, curr_state:VesselState, prev_state:VesselState):
+
+# Enforces a rule that the boat's location cannot change more than is mathematically reasonable based on
+# it's course and speed.
+# The grace factor is a measure of how flexible we are willing to be with this rule
+# If, for example, the grace factor is 1.5, then a distance which is less than or equal to
+# 1.5 times the expected distance would be considered acceptable
+def est_loc_max_dis(filter_state:FilterState, curr_state:VesselState, prev_state:VesselState, grace_fact=1.25):
     # First we get our default estimation, then we compare that to our rules
     est_location = default_location_estimate(filter_state, curr_state, prev_state)
     # Now we get the vector between our new estimate and our estimated location from the previous state
@@ -90,7 +93,36 @@ def est_loc_max_dis(filter_state:FilterState, curr_state:VesselState, prev_state
     distance = vector_length(delta_v)
     # This is the crux of it. If this distance is too large, then we have to intervene.
     # First we calculate our max allowable distance
-    total_seconds = seconds_passed(curr_state, prev_state)
-    max_allowable_distance = prev_state.SoG_state.est * total_seconds
+    total_seconds = seconds_passed_between_states(curr_state, prev_state)
+    max_allowable_distance = prev_state.SoG_state.est * total_seconds * grace_fact
+    if distance > max_allowable_distance:
+        # The default estimate violates the rule's constraints. We have to recalculate a value that is within our bounds
+        # We calculate a new estimated location, which is equal to where the boat would have been if it
+        # maintained it's course, and moved the maximum allowable distance.
+        est_location = prev_state.loc_state.est + prev_state.head_state.est * max_allowable_distance
+    return est_location
 
 
+# Similar to est_head_max_turn_per_sec, except this function does not consider the time passed. According to
+# this estimation function, the vessel is not capable of turning more that max_turn degrees between states,
+# irregardless of the amount of time that has passed.
+def est_head_max_turn(filter_state:FilterState, curr_state:VesselState, prev_state:VesselState, max_turn=MAX_ALLOWABLE_TURN_PER_STATE):
+    max_head_change = max_turn
+    # First we make our usual estimate, then we compare that to our rules.
+    est_heading = default_heading_estimate(filter_state, curr_state, prev_state)
+    # If the predicted heading would exceed the allowable heading change,
+    # then use the max heading change value instead
+    if angle_between(prev_state.head_state.est, est_heading) > max_head_change:
+        # This next part is actually sort of a work around. I don't know mathematically how to
+        # derive the heading unit vector, because there are two possible values. I calculate
+        # them both here, then determine which one is the better answer.
+        v1 = rotate_vector(prev_state.head_state.est, max_head_change)
+        v2 = rotate_vector(prev_state.head_state.est, -1 * max_head_change)
+        if angle_between(v1, est_heading) < angle_between(v2, est_heading):
+            # v1 is closer to the predicted heading than v1, which means its the appropriate estimation
+            return v1
+        else:
+            return v2
+    else:
+        # If we reach this point, then the predicted heading is within allowable tolerances.
+        return est_heading

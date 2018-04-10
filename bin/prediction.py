@@ -1,7 +1,6 @@
 import numpy as np
 
-from configuration import MAX_ALLOWABLE_VESSEL_SPEED
-from convert import knts_to_mps
+from convert import seconds_passed_between_states
 
 '''
 The prediction step is where you predict what the state of the vessel WILL BE, based on what you know about the boat in 
@@ -30,7 +29,8 @@ def default_heading_prediction(curr_state, prev_state):
 
 def default_location_prediction(curr_state, prev_state):
     # We assume that a vessels location is a direct and exact product of it's previous location, heading, and speed.
-    return np.add(prev_state.loc_state.est, prev_state.head_state.est * prev_state.SoG_state.est)
+    t = seconds_passed_between_states(curr_state, prev_state)
+    return np.add(prev_state.loc_state.est, prev_state.head_state.est * prev_state.SoG_state.est * t)
 
 
 

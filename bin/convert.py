@@ -1,20 +1,17 @@
 # Logic class for any conversions that need to be made
 from math import tan, radians
 import numpy as np
-from datetime import datetime, timedelta
+from datetime import datetime
 
+from configuration import knts_to_mps_conv_fact
 from state import VarState, VesselState
 from timezones import UTC
 
-'''
-Constants
-'''
-# knts * knts_to_mps_conv_fact = m/s
-knts_to_mps_conv_fact = 0.51444444444
 
+# TODO: Review this function. Is this correct?
 # Converts a true heading to a unit vector
-def true_heading_to_unit_vector(point, head_fn='True_heading'):
-    unit_v = np.array([1, tan(radians(float(point[head_fn])))])
+def true_heading_to_unit_vector(heading):
+    unit_v = np.array([1, tan(radians(heading))])
     mag = np.linalg.norm(unit_v)
     unit_v = unit_v/mag
     unit_v = np.array([unit_v[1], unit_v[0]])
@@ -34,7 +31,7 @@ def lat_lon_to_loc_vector(point, lat_fn='AA_LAT', lon_fn='AA_LON'):
     return np.array([aa_lat, aa_lon])
 
 
-def sog(point, sog_fn='SOG__knts_'):
+def ais_sog(point, sog_fn='SOG__knts_'):
     return point[sog_fn]
 
 
@@ -65,10 +62,16 @@ def make_state_from_deprecated_ais_data_format(data):
     SoG_state = VarState(meas=data[2])
     return VesselState(loc_state=loc_state, head_state=head_state, SoG_state=SoG_state, timestamp=data[3])
 
+
 def make_est_from_meas_pred_and_fact(meas, pred, fact):
     return np.add((1-fact)*pred, fact*meas)
 
 
-def seconds_passed(curr_state:VesselState, prev_state:VesselState):
-    time_passed = curr_state.timestamp - prev_state.timestamp
-    return time_passed.total_seconds()
+def seconds_passed_between_states(curr_state:VesselState, prev_state:VesselState):
+    return seconds_passed_between_datetimes(curr_state.timestamp, prev_state.timestamp)
+
+
+def seconds_passed_between_datetimes(dt1: datetime, dt2: datetime):
+    dv = dt1 - dt2
+    return dv.total_seconds()
+    

@@ -1,16 +1,18 @@
-from convert import make_state_from_deprecated_ais_data_format
-from data import convert_ais_data_to_usable_form, convert_vsm_data_to_states, record_vms_data_by_vessel_id
-from gen import gen_random_data, sin_1_4th
-from estimation import default_location_estimate, est_head_max_turn, est_SoG_max_spd, default_SoG_estimate, \
-    default_heading_estimate
+from connect import TableConnection
+from data import VMSDataPackage
+from estimation import est_head_max_turn_per_sec, est_SoG_max_spd_per_sec, est_loc_max_dis, est_head_max_turn
 from filter import ais_kalman
 from plot import make_iterative_plot
 from prediction import default_SoG_prediction, default_heading_prediction, default_location_prediction
 from state import FactorState, FilterState, FunctionState
 
-loc_fact = 0.2
-head_fact = 0.4
-SoG_fact = 0.4
+driver = '{PostgreSQL Unicode(x64)}'
+server = 'localhost'
+port = '5433'
+dbname = 'ais_kalman'
+user = 'postgres'
+pwd = 'postgres'
+
 
 factor_state = FactorState(
     loc_fact=0.5,
@@ -20,17 +22,17 @@ factor_state = FactorState(
 
 location_functions = FunctionState(
     predict=default_location_prediction,
-    estimate=default_location_estimate
+    estimate=est_loc_max_dis
 )
 
 heading_functions = FunctionState(
     predict=default_heading_prediction,
-    estimate=default_heading_estimate
+    estimate=est_head_max_turn_per_sec
 )
 
 SoG_functions = FunctionState(
     predict=default_SoG_prediction,
-    estimate=default_SoG_estimate
+    estimate=est_SoG_max_spd_per_sec
 )
 
 filter_state = FilterState(
@@ -40,11 +42,14 @@ filter_state = FilterState(
     SoG_functions
 )
 
-fp = r'C:\Users\tristan.sebens\Projects\AIS-Kalman-Filter\ais_data\test_vms_data.csv'
+table_conn = TableConnection('vms_test_voyage', driver, server, port, dbname, user, pwd)
+table_conn.init_connection()
 print('Converting data to states')
-states = convert_vsm_data_to_states(fp)
+data_package = VMSDataPackage(table_conn)
+print('Loading data from DB')
+data_package.load_payload()
 print('Running filter')
-vessel_states = ais_kalman(states, filter_state)
+vessel_states = ais_kalman(data_package.get_states(), filter_state)
 print('Making plot')
-make_iterative_plot(vessel_states, delay=0.001)
+make_iterative_plot(vessel_states, delay=0.000000001)
 input('Press enter')

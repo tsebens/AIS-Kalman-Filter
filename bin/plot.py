@@ -1,4 +1,3 @@
-import numpy as np
 import matplotlib.pyplot as plot
 
 '''
@@ -17,15 +16,18 @@ def plot_points(points, style):
     ys = [pt[1] for pt in points]
     plot.plot(xs, ys, style)
 
+
 # Plots the input points in the format of location data
 def plot_loc_data(points):
     style = 'ok-.'
     plot_points(points, style)
 
+
 # Plots the input points in the format of the location estimates
 def plot_loc_estimates(points):
     style = 'r^-'
     plot_points(points, style)
+
 
 # Plots the input points in the format of the location predictions
 def plot_loc_predictions(points):
@@ -38,15 +40,16 @@ def plot_b_func(points):
     plot_points(points, style)
 
 '''
-Accepts lists of points loc_data, predictions, and estimates
-
-Each list must be a list of xy tuples.
-
+Accepts lists of vessel states and creates a plot from them
 '''
-def make_plot(loc_data, loc_preds, loc_ests):
-    plot_loc_data(loc_data)
-    plot_loc_predictions(loc_preds)
-    plot_loc_estimates(loc_ests)
+def make_plot(states, delay=0, b_func=None):
+    plot_loc_data([state.loc_state.meas for state in states])
+    plot_loc_predictions([state.loc_state.pred for state in states])
+    plot_loc_estimates([state.loc_state.est for state in states])
+    plot.pause(delay)
+    if b_func is not None:
+        b_vals = [b_func(state.loc_state.meas[0]) for state in states]
+        plot_b_func(b_vals)
 
 '''
 Same as make_plot, but it plots the point in a step by step manner
@@ -55,27 +58,9 @@ If b_func is defined, the system will plot the base function as a green dotted l
 '''
 def make_iterative_plot(v_states, b_func=None, delay=0):
     plot.grid()
-    if delay == 0:
-        curr_loc_data = [state.loc_state.meas for state in v_states]
-        curr_loc_preds = [state.loc_state.pred for state in v_states]
-        curr_loc_ests = [state.loc_state.est for state in v_states]
-        if b_func != None:
-            b_vals = [b_func(state.meas[0]) for state in v_states]
-            curr_b_vals = b_vals[:i]
-            plot_b_func(curr_b_vals)
-        make_plot(curr_loc_data, curr_loc_preds, curr_loc_ests)
-    else:
-        for i in range(len(v_states) - 1):
-            curr_loc_data = [state.loc_state.meas for state in v_states][:i]
-            curr_loc_preds = [state.loc_state.pred for state in v_states][:i]
-            curr_loc_ests = [state.loc_state.est for state in v_states][:i]
-            if b_func != None:
-                b_vals = [b_func(state.meas[0]) for state in v_states]
-                curr_b_vals = b_vals[:i]
-                plot_b_func(curr_b_vals)
-            make_plot(curr_loc_data, curr_loc_preds, curr_loc_ests)
-            plot.pause(delay)
-    plot.show()
+    for i in range(1, len(v_states)):
+        states = v_states[:i]
+        make_plot(states, b_func=b_func, delay=delay)
 
 def make_comparison_plot(loc_data, loc_estimates, loc_predictions, head_data, head_estimates, head_predicitions, func):
     plot.grid()

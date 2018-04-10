@@ -11,16 +11,17 @@ class VarState:
 
 # Value object that holds the state of a particular vessel.
 class VesselState:
-    def __init__(self, loc_state=None, head_state=None, SoG_state=None, timestamp=None):
+    def __init__(self, loc_state=None, head_state=None, SoG_state=None, timestamp=None, row=None):
         self.loc_state = loc_state
         self.head_state = head_state
         self.SoG_state = SoG_state
         self.timestamp = timestamp
+        self.row=row
 
 
 # Value object to hold the various factors used during the filter's processing
 class FactorState:
-    def __init__(self, loc_fact: float = 1.0, head_fact: float = 1.0, SoG_fact: float = 1.0):
+    def __init__(self, loc_fact:float=1.0, head_fact:float=1.0, SoG_fact:float=1.0):
         self.location_factor = loc_fact
         self.heading_factor = head_fact
         self.SoG_factor = SoG_fact
@@ -45,11 +46,3 @@ class FilterState:
         self.location_functions = loc_function_state
         self.heading_functions = head_function_state
         self.SoG_functions = SoG_function_state
-
-
-
-
-
-
-
-
