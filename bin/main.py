@@ -1,17 +1,12 @@
-from connect import TableConnection
+from connect import TableConnection, connect_to_db
 from data import VMSDataPackage
 from estimation import est_head_max_turn_per_sec, est_SoG_max_spd_per_sec, est_loc_max_dis, est_head_max_turn
 from filter import ais_kalman
 from plot import make_iterative_plot
 from prediction import default_SoG_prediction, default_heading_prediction, default_location_prediction
 from state import FactorState, FilterState, FunctionState
+from pypyodbc import connect
 
-driver = '{PostgreSQL Unicode(x64)}'
-server = 'localhost'
-port = '5433'
-dbname = 'ais_kalman'
-user = 'postgres'
-pwd = 'postgres'
 
 
 factor_state = FactorState(
@@ -42,14 +37,24 @@ filter_state = FilterState(
     SoG_functions
 )
 
-table_conn = TableConnection('vms_test_voyage', driver, server, port, dbname, user, pwd)
-table_conn.init_connection()
+driver = '{PostgreSQL Unicode(x64)}'
+server = 'localhost'
+port = '5433'
+dbname = 'ais_kalman'
+user = 'postgres'
+pwd = 'postgres'
+
+conn = connect_to_db(driver, server, port, dbname, user, pwd)
+in_table = 'vms_test_voyage'
+out_table = 'vms_test_voyage_filtered'
+in_table_conn = TableConnection(conn, in_table)
+out_table_conn = TableConnection(conn, out_table)
 print('Converting data to states')
-data_package = VMSDataPackage(table_conn)
+data_package = VMSDataPackage(in_tbl_conn=in_table_conn, out_tbl_conn=out_table_conn)
 print('Loading data from DB')
 data_package.load_payload()
 print('Running filter')
 vessel_states = ais_kalman(data_package.get_states(), filter_state)
-print('Making plot')
-make_iterative_plot(vessel_states, delay=0.000000001)
-input('Press enter')
+data_package.set_filtered_states(vessel_states)
+data_package.write_payload()
+conn.close()

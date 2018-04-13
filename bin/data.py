@@ -12,7 +12,7 @@ from calculate import vector_between_two_points, vector_length, unit_vector
 from connect import TableConnection, retrieve_table_data, connect_to_db
 from convert import lat_lon_to_loc_vector, true_heading_to_unit_vector, ais_sog, ais_timestamp_to_datetime, \
     knts_to_mps, seconds_passed_between_datetimes
-from project import convert_loc_to_aa
+from project import convert_loc_to_aa, convert_aa_to_loc
 from state import VesselState, VarState
 from timezones import UTC
 
@@ -30,6 +30,7 @@ orbcomm_dir = r'C:\Users\tristan.sebens\Projects\OrbCommInterface\downloads'
 ----------------------------------------------------------------
 '''
 
+
 class NoTableConnectionSpecified(Exception):
     pass
 
@@ -38,10 +39,15 @@ class UseOfAbstractForm(Exception):
     pass
 
 
+class AttemptToWriteUnprocessedData(Exception):
+    pass
+
+
 # TODO: Still needs a fair amount of work ironing out the data loading process.
 class DataPackageBase:
-    def __init__(self, in_tbl_conn: TableConnection=None, out_tbl_conn=None):
+    def __init__(self, in_tbl_conn: TableConnection=None, out_tbl_conn: TableConnection=None):
         self.payload = None
+        self.filtered_states = None
         self.in_tbl_conn = in_tbl_conn
         self.out_tbl_conn = out_tbl_conn
 
@@ -52,6 +58,13 @@ class DataPackageBase:
         if self.in_tbl_conn is None:
             raise NoTableConnectionSpecified('Attempted to load data into DataPackage, but no TableConnection has been specified.')
         self.payload = self.in_tbl_conn.get_data()
+
+    def write_payload(self):
+        if self.out_tbl_conn is None:
+            raise NoTableConnectionSpecified('Attempted to write DataPackage payload to DB, but not TableConnection has been specified.')
+        if self.filtered_states is None:
+            raise AttemptToWriteUnprocessedData('Attempted to write to the DB, but the data hasn\'t been processed yet.')
+        self.out_tbl_conn.write_data(self.make_rows(self.filtered_states))
 
     # Returns the values of the payload as a generator of OrderedDicts
     def get_payload(self):
@@ -68,12 +81,20 @@ class DataPackageBase:
             yield self.make_state(curr_row, prev_row)
             prev_row = curr_row
 
+    def set_filtered_states(self, states):
+        self.filtered_states = states;
+
     def make_state(self, curr_row, prev_row):
         raise UseOfAbstractForm('Attempted to use abstract version of make_state. Must use a child class')
 
-
     def make_init_state(self, init_row):
         raise UseOfAbstractForm('Attempted to use abstract version of make_init_state. Must use a child class')
+
+    def make_rows(self, states):
+        return [self.make_row(state) for state in states]
+
+    def make_row(self, state):
+        raise UseOfAbstractForm('Attempted to use abstract version of make_row. Must use a child class')
 
 
 class VMSDataPackage(DataPackageBase):
@@ -82,6 +103,9 @@ class VMSDataPackage(DataPackageBase):
 
     def make_init_state(self, init_row):
         return make_init_state_from_vms(init_row)
+
+    def make_row(self, state):
+        return make_row_from_vms(state)
 
 
 class AISDataPackage(DataPackageBase):
@@ -127,7 +151,8 @@ def make_vessel_state_from_ais_rows(curr_row, prev_row):
         SoG_state=VarState(
             meas=get_SoG_from_ais(curr_row)
         ),
-        timestamp=get_timestamp_from_ais(curr_row)
+        timestamp=get_timestamp_from_ais(curr_row),
+        row = curr_row
     )
 
 
@@ -151,9 +176,14 @@ def make_vessel_state_from_vms_rows(curr_row, prev_row):
         SoG_state=VarState(
             meas=get_SoG_from_vms(curr_row, prev_row)
         ),
-        timestamp=get_timestamp_from_vms(curr_row)
+        timestamp=get_timestamp_from_vms(curr_row),
+        row=curr_row
     )
 
+def make_row_from_vms(state: VesselState):
+    row: OrderedDict = state.row
+    row['filt_lon'], row['filt_lat'] = convert_aa_to_loc(state.loc_state.est[0], state.loc_state.est[1])
+    return row
 
 def make_init_state_from_vms(init_row):
     return VesselState(
@@ -165,7 +195,8 @@ def make_init_state_from_vms(init_row):
         SoG_state=VarState(
             meas=0
         ),
-        timestamp=get_timestamp_from_vms(init_row)
+        timestamp=get_timestamp_from_vms(init_row),
+        row=init_row
     )
 
 
