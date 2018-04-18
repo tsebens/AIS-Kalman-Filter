@@ -11,8 +11,10 @@ class AISDataPackage(DataPackageBase):
     def make_state(self, curr_row, prev_row):
         return make_vessel_state_from_ais_rows(curr_row, prev_row)
 
-    def make_init_state(self, init_row):
-        return make_vessel_state_from_ais_rows(init_row, None)
+    def make_init_states(self, init_row_1, init_row_2):
+        vs1 = make_vessel_state_from_ais_rows(init_row_1, None)
+        vs2 = make_vessel_state_from_ais_rows(init_row_2, None)
+        return vs1, vs2
 
     def make_row(self, state):
         return make_row_from_ais_state()

@@ -1,3 +1,5 @@
+from collections import OrderedDict
+
 from connect import TableVessel
 
 
@@ -10,6 +12,10 @@ class UseOfAbstractForm(Exception):
 
 
 class AttemptToWriteUnprocessedData(Exception):
+    pass
+
+
+class AttemptToReadUnprocessedData(Exception):
     pass
 
 
@@ -45,8 +51,12 @@ class DataPackageBase:
 
     def get_states(self):
         payload_gen = self.get_payload()
-        prev_row = payload_gen.__next__()
-        yield self.make_init_state(prev_row)
+        init_row_1 = payload_gen.__next__()
+        init_row_2 = payload_gen.__next__()
+        vs1, vs2 = self.make_init_states(init_row_1, init_row_2)
+        yield vs1
+        yield vs2
+        prev_row = init_row_2
         for curr_row in payload_gen:
             yield self.make_state(curr_row, prev_row)
             prev_row = curr_row
@@ -54,10 +64,15 @@ class DataPackageBase:
     def set_filtered_states(self, states):
         self.filtered_states = states
 
+    def get_filtered_states(self):
+        if self.filtered_states is None:
+            raise AttemptToReadUnprocessedData('Attempted to read filtered data before it has been filtered.')
+        return self.filtered_states
+
     def make_state(self, curr_row, prev_row):
         raise UseOfAbstractForm('Attempted to use abstract version of make_state. Must use a child class')
 
-    def make_init_state(self, init_row):
+    def make_init_states(self, init_row_1: OrderedDict, init_row_2: OrderedDict):
         raise UseOfAbstractForm('Attempted to use abstract version of make_init_state. Must use a child class')
 
     def make_rows(self, states):

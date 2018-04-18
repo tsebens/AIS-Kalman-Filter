@@ -1,7 +1,5 @@
-from datetime import datetime
-
 import numpy as np
-
+from datetime import datetime
 from calculate import unit_vector, vector_between_two_points, vector_length
 from convert import seconds_passed_between_datetimes
 from data_package import DataPackageBase
@@ -14,8 +12,8 @@ class VMSDataPackage(DataPackageBase):
     def make_state(self, curr_row, prev_row):
         return make_vessel_state_from_vms_rows(curr_row, prev_row)
 
-    def make_init_state(self, init_row):
-        return make_init_state_from_vms(init_row)
+    def make_init_states(self, init_row_1, init_row_2):
+        return make_init_state_from_vms(init_row_1, init_row_2)
 
     def make_row(self, state):
         return make_row_from_vms_state(state)
@@ -37,19 +35,35 @@ def make_vessel_state_from_vms_rows(curr_row, prev_row):
     )
 
 
-def make_init_state_from_vms(init_row):
-    return VesselState(
+def make_init_state_from_vms(init_row_1, init_row_2):
+    heading = get_head_from_vms(init_row_2, init_row_1)
+    SoG = get_SoG_from_vms(init_row_2, init_row_1)
+    vs1 = VesselState(
         loc_state=VarState(
-            meas=get_loc_from_vms(init_row)
-        ),head_state=VarState(
-            meas=np.array([0,0])
+            meas=get_loc_from_vms(init_row_1)
+        ), head_state=VarState(
+            meas=heading
         ),
         SoG_state=VarState(
-            meas=0
+            meas=SoG
         ),
-        timestamp=get_timestamp_from_vms(init_row),
-        row=init_row
+        timestamp=get_timestamp_from_vms(init_row_1),
+        row=init_row_1
     )
+    vs2 = VesselState(
+        loc_state=VarState(
+            meas=get_loc_from_vms(init_row_2)
+        ),head_state=VarState(
+            meas=heading
+        ),
+        SoG_state=VarState(
+            meas=SoG
+        ),
+        timestamp=get_timestamp_from_vms(init_row_2),
+        row=init_row_2
+    )
+    return vs1, vs2
+
 
 
 def make_row_from_vms_state(state: VesselState):
