@@ -1,4 +1,4 @@
-from collections import OrderedDict
+from collections import OrderedDict, Set
 from typing import List
 from pypika import Query, Table, Field
 
@@ -23,6 +23,19 @@ class DataBase:
             driver=self.driver, server=self.server, port=self.port, dbname=self.db_name, user=self.user, pwd=self.pwd)
         return connect(conn_string)
 
+    def get_ids(self, table: Table, id_field: Field):
+        conn = self.get_connection()
+        q = Query\
+            .from_(table)\
+            .select(id_field)
+        q = str(q) + ';'
+        q.replace('\"', '')
+        print(q)
+        results = conn.cursor().execute(q)
+        conn.close()
+        for result in results:
+            print(result)
+        return Set(results)
 
 class PostgreSQLDataBase(DataBase):
     def __init__(self, server, port, db_name, user, pwd):
@@ -79,6 +92,7 @@ class TableVessel:
         return get_table_column_names(self.conn, self.table)
 
 
+# TODO: The constant values in this function (DB_COLUMNS_TABLE, DB_COLUMN_COLUMN_NAME, etc) should probably be made attributes of the DataBase object.
 def get_table_column_names(conn: Connection, table: Table):
     q = Query\
         .from_(DB_COLUMNS_TABLE)\
