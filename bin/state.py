@@ -1,15 +1,15 @@
 '''
 Collection of value objects meant to provide some structure to the values used in the filter.
 '''
-# Value object that holds the state of a particular vessel variable (location, heading, speed over ground)
 from collections import OrderedDict
 
 
+# Value object that holds the state of a particular vessel variable (location, heading, speed over ground)
 class VarState:
     def __init__(self, meas=None, pred=None, est=None):
-        self.meas = meas
-        self.pred = pred
-        self.est  = est
+        self.meas = meas # The measured value
+        self.pred = pred # The predicted value
+        self.est  = est  # The estimated value
 
 
 # Value object that holds the state of a particular vessel.

@@ -1,10 +1,8 @@
 import sys
-
 from pypika import Table, Field
-
-from connect import TableConnection, PostgreSQLDataBase
+from connect import TableVessel, PostgreSQLDataBase
 from vms import VMSDataPackage
-from estimation import est_head_max_turn_per_sec, est_SoG_max_spd_per_sec, est_loc_max_dis, est_head_max_turn
+from estimation import est_head_max_turn_per_sec, est_SoG_max_spd_per_sec, est_loc_max_dis
 from filter import ais_kalman
 from prediction import default_SoG_prediction, default_heading_prediction, default_location_prediction
 from state import FactorState, FilterState, FunctionState
@@ -48,16 +46,13 @@ pwd = ''
 
 db_spec = PostgreSQLDataBase(server, port, dbname, user, pwd)
 
-in_conn = db_spec.get_connection()
-out_conn = db_spec.get_connection()
+conn = db_spec.get_connection()
 in_table = Table('VMS_TEST_VOYAGE')
 out_table = Table("VMS_TEST_VOYAGE_FILTERED")
-in_table_conn = TableConnection(in_conn, in_table, id_field=Field("VESSEL_ID"), id_value=2791)
-out_table_conn = TableConnection(out_conn, out_table)
-data_package = VMSDataPackage(in_tbl_conn=in_table_conn, out_tbl_conn=out_table_conn)
+table_vessel = TableVessel(conn, in_table, id_field=Field("VESSEL_ID"), id_value=2791)
+data_package = VMSDataPackage(in_tbl_vessel=table_vessel, out_tbl_vessel=table_vessel)
 data_package.load_payload()
 vessel_states = ais_kalman(data_package.get_states(), filter_state)
 data_package.set_filtered_states(vessel_states)
 data_package.write_payload()
-in_conn.close()
-out_conn.close()
+conn.close()

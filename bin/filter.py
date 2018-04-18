@@ -2,13 +2,13 @@
 from convert import make_initial_filter_state
 from state import FilterState, VesselState, VarState
 
-'''
+"""
 Executes a Kalman filter on the passed ais_data and returns a list of estimates for location(lat/lon), heading, and SoG for every point in ais_data after the first.
 The first point is considered to be completely accurate. Gotta start somewhere.
 
 The filter_state is a value object which contains a lot of information about the way in which the filter should behave
 Refer to the FilterState object documentation for a more complete description.
-'''
+"""
 def ais_kalman(vessel_states, filter_state: FilterState):
     filtered_states = []
     # Populate our initial values
@@ -29,18 +29,18 @@ def ais_kalman(vessel_states, filter_state: FilterState):
 
 
 def estimate_step(curr_state: VesselState, prev_state: VesselState, filter_state: FilterState):
-    curr_state.head_state.est = filter_state.heading_functions.estimate(
-        filter_state, curr_state, prev_state)
-    curr_state.SoG_state.est = filter_state.SoG_functions.estimate(
-        filter_state, curr_state, prev_state)
-    curr_state.loc_state.est = filter_state.location_functions.estimate(
-        filter_state, curr_state, prev_state)
+    curr_state.head_state.est = \
+        filter_state.heading_functions.estimate(filter_state, curr_state, prev_state)
+    curr_state.SoG_state.est = \
+        filter_state.SoG_functions.estimate(filter_state, curr_state, prev_state)
+    curr_state.loc_state.est = \
+        filter_state.location_functions.estimate(filter_state, curr_state, prev_state)
 
 
 def prediction_step(curr_state: VesselState, prev_state: VesselState, filter_state: FilterState):
-    curr_state.loc_state.pred = filter_state.location_functions.predict(
-        curr_state, prev_state)
-    curr_state.head_state.pred = filter_state.heading_functions.predict(
-        curr_state, prev_state)
-    curr_state.SoG_state.pred = filter_state.SoG_functions.predict(
-        curr_state, prev_state)
+    curr_state.loc_state.pred = \
+        filter_state.location_functions.predict(curr_state, prev_state)
+    curr_state.head_state.pred = \
+        filter_state.heading_functions.predict(curr_state, prev_state)
+    curr_state.SoG_state.pred = \
+        filter_state.SoG_functions.predict(curr_state, prev_state)

@@ -3,7 +3,7 @@ from collections import OrderedDict
 import numpy as np
 
 from convert import true_heading_to_unit_vector
-from data import DataPackageBase
+from data_package import DataPackageBase
 from state import VesselState, VarState
 
 

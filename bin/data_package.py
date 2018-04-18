@@ -1,4 +1,4 @@
-from connect import TableConnection
+from connect import TableVessel
 
 
 class NoTableConnectionSpecified(Exception):
@@ -15,11 +15,11 @@ class AttemptToWriteUnprocessedData(Exception):
 
 # TODO: Still needs a fair amount of work ironing out the data loading process.
 class DataPackageBase:
-    def __init__(self, in_tbl_conn: TableConnection=None, out_tbl_conn: TableConnection=None):
+    def __init__(self, in_tbl_vessel: TableVessel=None, out_tbl_vessel: TableVessel=None):
         self.payload = None
         self.filtered_states = None
-        self.in_tbl_conn = in_tbl_conn
-        self.out_tbl_conn = out_tbl_conn
+        self.in_tbl_conn = in_tbl_vessel
+        self.out_tbl_conn = out_tbl_vessel
 
     # Loads the DataPackage with all of the data from the DB table
     def load_payload(self):

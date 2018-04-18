@@ -17,6 +17,7 @@ pwd = 'postgres'
 '''
 
 class DataBase:
+    """Holds the specifications for connecting to a database using the pypyodbc library and protocol"""
     def __init__(self, driver, server, port, db_name, user, pwd):
         self.driver = driver
         self.server = server
@@ -32,9 +33,9 @@ class DataBase:
         return connect(conn_string)
 
 
-class PostgreSQLDataBase(DataBase)
+class PostgreSQLDataBase(DataBase):
     def __init__(self, server, port, db_name, user, pwd):
-        driver = '{PostgreSQL Unicode(x64)}'
+        self.driver = '{PostgreSQL Unicode(x64)}'
         self.server = server
         self.port = port
         self.db_name = db_name
@@ -42,7 +43,8 @@ class PostgreSQLDataBase(DataBase)
         self.pwd = pwd
 
 
-class TableConnection:
+class TableVessel:
+    """Provides an interface to all values in a database table that correspond to a particular vessel. Those values will be identified by the id field and the id value"""
     def __init__(self, conn: Connection, table: Table, id_field: Field=None, id_value: int=None):
         self.id_field = id_field
         self.id_value = id_value

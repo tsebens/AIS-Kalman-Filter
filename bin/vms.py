@@ -4,7 +4,7 @@ import numpy as np
 
 from calculate import unit_vector, vector_between_two_points, vector_length
 from convert import seconds_passed_between_datetimes
-from data import DataPackageBase
+from data_package import DataPackageBase
 from project import convert_aa_to_loc, convert_loc_to_aa
 from state import VesselState, VarState
 from timezones import UTC
