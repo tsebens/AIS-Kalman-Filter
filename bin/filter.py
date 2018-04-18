@@ -1,5 +1,5 @@
 # Kalman filter
-from convert import make_initial_state
+from convert import make_initial_filter_state
 from state import FilterState, VesselState, VarState
 
 '''
@@ -12,7 +12,7 @@ Refer to the FilterState object documentation for a more complete description.
 def ais_kalman(vessel_states, filter_state: FilterState):
     filtered_states = []
     # Populate our initial values
-    prev_state = make_initial_state(vessel_states.__next__())
+    prev_state = make_initial_filter_state(vessel_states.__next__())
     # Now, for every data point we have (skipping the first one since we've already loaded those values) we use the
     # Kalman filter to estimate the true location of our vessel.
     for curr_state in vessel_states:

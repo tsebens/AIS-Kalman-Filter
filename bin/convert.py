@@ -8,7 +8,6 @@ from state import VarState, VesselState
 from timezones import UTC
 
 
-# TODO: Review this function. Is this correct?
 # Converts a true heading to a unit vector
 def true_heading_to_unit_vector(heading):
     unit_v = np.array([1, tan(radians(heading))])
@@ -18,6 +17,12 @@ def true_heading_to_unit_vector(heading):
     return unit_v
 
 
+def unit_vectorto_true_heading(vector):
+    # TODO: Implement this function
+    raise Exception('You still have to implement this conversion function, shithead.')
+
+
+# Convert an ais format timestamp to a datetime object.
 def ais_timestamp_to_datetime(timestamp, tz=UTC):
     date, time = timestamp.split(' ')
     year, month, day = date.split('-')
@@ -25,16 +30,14 @@ def ais_timestamp_to_datetime(timestamp, tz=UTC):
     return datetime(day=int(day), month=int(month), year=int(year), hour=int(hour), minute=int(minute), second=int(second), tzinfo=tz)
 
 
+# Convert a lat/lon pair to a vector
 def lat_lon_to_loc_vector(point, lat_fn='AA_LAT', lon_fn='AA_LON'):
     aa_lat = point[lat_fn]
     aa_lon = point[lon_fn]
     return np.array([aa_lat, aa_lon])
 
 
-def ais_sog(point, sog_fn='SOG__knts_'):
-    return point[sog_fn]
-
-
+# Convert knots to meters per second
 def knts_to_mps(knts):
     return knts * knts_to_mps_conv_fact
 
@@ -43,11 +46,15 @@ def knts_to_mps(knts):
 # Essentially make a state in which we must assume that the measured values are 100% accurate.
 def make_initial_state_from_deprecated_ais_data_format(data):
     state = make_state_from_deprecated_ais_data_format(data)
-    make_initial_state(state)
+    make_initial_filter_state(state)
     return state
 
 
-def make_initial_state(state):
+# When the filter starts, it cannot make an estimate for the current point unless there is a previous point with
+# estimates we can compare it to. To get around this, we simply assume that the first state we see is perfectly
+# accurate in it's measurements, and set the predicted and estimated values of every variable in the state to that
+# variable's measured value.
+def make_initial_filter_state(state):
     for var in (state.loc_state, state.head_state, state.SoG_state):
         var.est = var.meas
         var.pred = var.meas

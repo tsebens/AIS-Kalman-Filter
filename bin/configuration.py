@@ -8,6 +8,8 @@ configuration options that the user may want to change prior to running the appl
 Note: NOT ALL OF THESE ARE ALWAYS USED
 '''
 # The number of degrees a fishing vessel can change it's heading by, per second
+from pypika import Table, Field
+
 AVERAGE_HEADING_CHANGE_DEGREES_PER_SECOND = 3
 MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND = 6
 # Maximum number of degrees a vessel is allowed to change it's heading by between consecutive states
@@ -26,3 +28,16 @@ Constants
 '''
 # knts * knts_to_mps_conv_fact = m/s
 knts_to_mps_conv_fact = 0.51444444444
+
+# The directory where all grouped ais data will be stored
+data_dir = r'C:\Users\tristan.sebens\Projects\AIS-Kalman-Filter\data'
+
+# The directory where all downloaded OrbComm AIS data can be found
+orbcomm_dir = r'C:\Users\tristan.sebens\Projects\OrbCommInterface\downloads'
+
+# The DB table where column names are stored.
+DB_COLUMNS_TABLE = Table('columns', schema='information_schema') # Configured for PostgreSQL DB
+# The field in the column name table that stores the column names
+DB_COLUMN_COLUMN_NAME = Field('column_name')
+# The field in the column name table that stores the table names
+DB_COLUMN_TABLE_NAME_FIELD = Field('table_name')

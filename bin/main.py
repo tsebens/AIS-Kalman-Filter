@@ -1,11 +1,13 @@
-from connect import TableConnection, connect_to_db
-from data import VMSDataPackage
+import sys
+
+from pypika import Table, Field
+
+from connect import TableConnection, PostgreSQLDataBase
+from vms import VMSDataPackage
 from estimation import est_head_max_turn_per_sec, est_SoG_max_spd_per_sec, est_loc_max_dis, est_head_max_turn
 from filter import ais_kalman
-from plot import make_iterative_plot
 from prediction import default_SoG_prediction, default_heading_prediction, default_location_prediction
 from state import FactorState, FilterState, FunctionState
-from pypyodbc import connect
 
 
 
@@ -39,22 +41,23 @@ filter_state = FilterState(
 
 driver = '{PostgreSQL Unicode(x64)}'
 server = 'localhost'
-port = '5433'
-dbname = 'ais_kalman'
-user = 'postgres'
-pwd = 'postgres'
+port = '6000'
+dbname = 'kalman'
+user = 'tristan.sebens'
+pwd = ''
 
-conn = connect_to_db(driver, server, port, dbname, user, pwd)
-in_table = 'vms_test_voyage'
-out_table = 'vms_test_voyage_filtered'
-in_table_conn = TableConnection(conn, in_table)
-out_table_conn = TableConnection(conn, out_table)
-print('Converting data to states')
+db_spec = PostgreSQLDataBase(server, port, dbname, user, pwd)
+
+in_conn = db_spec.get_connection()
+out_conn = db_spec.get_connection()
+in_table = Table('VMS_TEST_VOYAGE')
+out_table = Table("VMS_TEST_VOYAGE_FILTERED")
+in_table_conn = TableConnection(in_conn, in_table, id_field=Field("VESSEL_ID"), id_value=2791)
+out_table_conn = TableConnection(out_conn, out_table)
 data_package = VMSDataPackage(in_tbl_conn=in_table_conn, out_tbl_conn=out_table_conn)
-print('Loading data from DB')
 data_package.load_payload()
-print('Running filter')
 vessel_states = ais_kalman(data_package.get_states(), filter_state)
 data_package.set_filtered_states(vessel_states)
 data_package.write_payload()
-conn.close()
+in_conn.close()
+out_conn.close()
