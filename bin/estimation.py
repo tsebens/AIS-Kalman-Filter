@@ -1,5 +1,5 @@
 from calculate import angle_between, rotate_vector, vector_between_two_points, vector_length
-from configuration import MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND, \
+from conf.static import MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND, \
     MAX_ALLOWABLE_VESSEL_ACCELERATION_METERS_PER_SECOND, MAX_ALLOWABLE_TURN_PER_STATE
 from convert import make_est_from_meas_pred_and_fact, seconds_passed_between_states
 from state import VesselState, FilterState

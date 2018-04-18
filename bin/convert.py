@@ -3,7 +3,7 @@ from math import tan, radians
 import numpy as np
 from datetime import datetime
 
-from configuration import knts_to_mps_conv_fact
+from conf.static import knts_to_mps_conv_fact
 from state import VarState, VesselState
 from timezones import UTC
 

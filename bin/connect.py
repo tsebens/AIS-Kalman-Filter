@@ -4,17 +4,8 @@ from pypika import Query, Table, Field
 
 from pypyodbc import connect, Connection
 
-from configuration import DB_COLUMNS_TABLE, DB_COLUMN_TABLE_NAME_FIELD, DB_COLUMN_COLUMN_NAME
+from conf.db import DB_COLUMNS_TABLE, DB_COLUMN_COLUMN_NAME, DB_COLUMN_TABLE_NAME_FIELD
 
-'''
-Test db specs
-driver = '{PostgreSQL Unicode(x64)}'
-server = 'localhost'
-port = '5433'
-dbname = 'ais_kalman'
-user = 'postgres'
-pwd = 'postgres'
-'''
 
 class DataBase:
     """Holds the specifications for connecting to a database using the pypyodbc library and protocol"""
