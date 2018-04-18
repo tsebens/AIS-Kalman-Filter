@@ -1,7 +1,10 @@
 from collections import OrderedDict
 from typing import List
+from pypika import Query, Table, Field
 
-from pypyodbc import connect, Connection, Cursor
+from pypyodbc import connect, Connection
+
+from configuration import DB_COLUMNS_TABLE, DB_COLUMN_TABLE_NAME_FIELD, DB_COLUMN_COLUMN_NAME
 
 '''
 Test db specs
@@ -13,21 +16,82 @@ user = 'postgres'
 pwd = 'postgres'
 '''
 
+class DataBase:
+    def __init__(self, driver, server, port, db_name, user, pwd):
+        self.driver = driver
+        self.server = server
+        self.port = port
+        self.db_name = db_name
+        self.user = user
+        self.pwd = pwd
 
-class TableConnection():
-    def __init__(self, conn: Connection, table_name: str):
+    def get_connection(self):
+        conn_string = "Driver={driver};Server={server};Port={port};Database={dbname};Uid={user};Pwd={pwd};"
+        conn_string = conn_string.format(
+            driver=self.driver, server=self.server, port=self.port, dbname=self.db_name, user=self.user, pwd=self.pwd)
+        return connect(conn_string)
+
+
+class PostgreSQLDataBase(DataBase)
+    def __init__(self, server, port, db_name, user, pwd):
+        driver = '{PostgreSQL Unicode(x64)}'
+        self.server = server
+        self.port = port
+        self.db_name = db_name
+        self.user = user
+        self.pwd = pwd
+
+
+class TableConnection:
+    def __init__(self, conn: Connection, table: Table, id_field: Field=None, id_value: int=None):
+        self.id_field = id_field
+        self.id_value = id_value
+        self.table = table
         self.conn = conn
-        self.tbl_name = table_name
+        # self.init_connection() # TODO: Decide whether or not to keep this
 
     def init_connection(self):
         self.conn.connect()
 
     # Fills the data package with the relevant data from the database
     def get_data(self):
-        return [row for row in retrieve_table_data(self.conn, self.tbl_name)]
+        q = Query\
+            .from_(self.table).select('*')\
+            .where(self.id_field == self.id_value)
+        cur = self.conn.cursor()
+        return [make_row_dict(column_names(cur), row) for row in cur.execute(str(q))]
 
-    def write_data(self, data):
-        write_table_data(self.conn, self.tbl_name, data)
+    def write_data(self, data: List[OrderedDict], truncate=False):
+        cursor = self.conn.cursor()
+        if truncate:
+            q = self.make_truncate_statement()
+            cursor.execute(str(q))
+        q = self.make_write_statement(data)
+        print(q)
+        cursor.execute(q)
+        cursor.commit()
+
+    def make_write_statement(self, data):
+        q = Query\
+            .into(self.table)\
+            .columns(*self.get_column_names())\
+            .insert(*[[row[field] for field in row.keys()] for row in data])
+        return str(q) + ';'
+
+    def make_truncate_statement(self):
+        template = 'TRUNCATE {schema}{table}'
+        return template.format(schema=self.table.schema, table=self. table.table_name)
+
+    def get_column_names(self):
+        return get_table_column_names(self.conn, self.table)
+
+
+def get_table_column_names(conn: Connection, table: Table):
+    q = Query\
+        .from_(DB_COLUMNS_TABLE)\
+        .select(DB_COLUMN_COLUMN_NAME)\
+        .where(DB_COLUMN_TABLE_NAME_FIELD == table.table_name)
+    return [result[0] for result in conn.cursor().execute(str(q))]
 
 
 def connect_to_db(driver, server, port, dbname, user, pwd):
@@ -44,40 +108,7 @@ def enclose_values_in_parentheses(iter, enclose=''):
     return template[:-1] + ")"
 
 
-def make_column_names_string(names):
-    return enclose_values_in_parentheses(names, enclose='\"')
 
-
-# Values must be a list of lists
-def make_values_string(values: list):
-    fieldnames = values[0].keys()
-    return enclose_values_in_parentheses([enclose_values_in_parentheses([row[fieldnames] for fieldnames in fieldnames]) for row in values])
-
-
-def make_insert_string(table: str, values: List[OrderedDict], schema: str=''):
-    if schema != '':
-        schema += '.'
-    fieldnames = values[0].keys()
-    template = 'INSERT INTO {schema}{table} {column_names} VALUES {values}'
-    return template.format(schema=schema, table=table,
-                           column_names=make_column_names_string(fieldnames),
-                           values=make_values_string(values))
-
-
-def make_truncate_string(table: str, schema: str=''):
-    if schema != '':
-        schema += '.'
-    template = 'TRUNCATE {schema}{table}'
-    return template.format(schema=schema, table=table)
-
-
-def make_select_string(table, columns='*', where_str=None):
-    if columns != '*':
-        columns = enclose_values_in_parentheses(columns)
-    template = "SELECT {columns} FROM {table}".format(columns=columns, table=table)
-    if where_str is not None:
-        template += ' ' + where_str
-    return template
 
 
 def column_names(cursor):
@@ -90,18 +121,3 @@ def make_row_dict(fields, row):
     for i in range(len(fields)):
         row_dict[fields[i]] = row[i]
     return row_dict
-
-
-def retrieve_table_data(conn: Connection, table):
-    cursor: Cursor = conn.cursor().execute(make_select_string(table))
-    fields = column_names(cursor)
-    for row in cursor:
-        yield make_row_dict(fields, row)
-
-
-def write_table_data(conn: Connection, table, data, truncate=True):
-    cursor = conn.cursor()
-    if truncate:
-        cursor.execute(make_truncate_string(table))
-    cursor.execute(make_insert_string(table, data))
-    cursor.commit()
