@@ -72,7 +72,7 @@ def make_row_from_vms_state(state: VesselState):
     return row
 
 
-def get_loc_from_vms(row, lat_fn: str='latitude', lon_fn: str='longitude'):
+def get_loc_from_vms(row, lat_fn: str='LATITUDE', lon_fn: str='LONGITUDE'):
     lat = float(row[lat_fn])
     lon = float(row[lon_fn])
     lon, lat = convert_loc_to_aa(lon, lat)
@@ -83,13 +83,13 @@ def get_loc_from_vms(row, lat_fn: str='latitude', lon_fn: str='longitude'):
     return np.array([lon, lat])
 
 
-def get_head_from_vms(curr_row, prev_row, lat_fn='latitude', lon_fn='longitude'):
+def get_head_from_vms(curr_row, prev_row, lat_fn='LATITUDE', lon_fn='LONGITUDE'):
     prev_loc = get_loc_from_vms(curr_row, lat_fn=lat_fn, lon_fn=lon_fn)
     curr_loc = get_loc_from_vms(prev_row, lat_fn=lat_fn, lon_fn=lon_fn)
     return unit_vector(vector_between_two_points(prev_loc, curr_loc))
 
 
-def get_SoG_from_vms(curr_row, prev_row, lat_fn: str ='latitude', lon_fn: str ='longitude'):
+def get_SoG_from_vms(curr_row, prev_row, lat_fn: str ='LATITUDE', lon_fn: str ='LONGITUDE'):
     prev_loc = get_loc_from_vms(curr_row, lat_fn=lat_fn, lon_fn=lon_fn)
     curr_loc = get_loc_from_vms(prev_row, lat_fn=lat_fn, lon_fn=lon_fn)
     # Since the location of the vessel is measured in meters, all we have to do is divide the
@@ -101,14 +101,15 @@ def get_SoG_from_vms(curr_row, prev_row, lat_fn: str ='latitude', lon_fn: str ='
 
 
 def make_timestamp_from_vms_value(timestamp):
+    '''VMS format: 2018-04-16 00:00:00.0000000'''
     if type(timestamp) == datetime:
         # If the data has been read frm a database, then it will already be in datetime
         return timestamp
     date, time = timestamp.split(' ')
-    month, day, year = date.split('/')
-    hour, minute = time.split(':')
-    return datetime(day=int(day), month=int(month), year=int(year), hour=int(hour), minute=int(minute), tzinfo=UTC)
+    year, month, day = date.split('-')
+    hour, minute, second = time.split(':')
+    return datetime(day=int(day), month=int(month), year=int(year), hour=int(hour), minute=int(minute), second=int(float(second)), tzinfo=UTC)
 
 
-def get_timestamp_from_vms(curr_row, ts_fn='position_datetime'):
+def get_timestamp_from_vms(curr_row, ts_fn='POSITION_DATETIME'):
     return make_timestamp_from_vms_value(curr_row[ts_fn])

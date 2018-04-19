@@ -1,3 +1,5 @@
+import sys
+
 from collections import OrderedDict, Set
 from typing import List
 from pypika import Query, MSSQLQuery, PostgreSQLQuery, Table, Field
@@ -47,11 +49,12 @@ class DataBase:
     def get_unique_elements(self, table: Table, field: Field):
         """Returns the unique values for a given field in a given table"""
         conn = self.get_connection()
-        q = self.get_query_base()\
-            .from_(table) \
-            .select(field)
+        q = str(
+             self.get_query_base()
+            .from_(table)
+            .select(field))
         results = conn.cursor().execute(q)
-        return Set(results)
+        return set(results)
 
     def get_truncate_statement(self, table):
         """Truncate statements vary significantly between databases. This abstracts the specifications away"""
@@ -64,13 +67,16 @@ class DataBase:
     def test_connection(self):
         """Try to connect to the database with the current connection specifications"""
         try:
-            self.get_connection()
+            conn = self.get_connection()
+            print('Successful connection.')
+            conn.close()
         except DatabaseError as dbe:
             print('There is a problem with the connection:\n%s' % dbe.__str__())
 
 
 class PostgreSQLDataBase(DataBase):
-    def __init__(self, server, port, db_name, user, pwd):
+    def __init__(self, server, port, db_name, user, pwd, trusted_source=False):
+        super(PostgreSQLDataBase, self).__init__('', '', '', '', '', '', trusted_source)
         self.driver = '{PostgreSQL Unicode(x64)}'
         self.server = server
         self.port = port
@@ -91,7 +97,8 @@ class PostgreSQLDataBase(DataBase):
 
 
 class SQLServerDataBase(DataBase):
-    def __init__(self, server, port, db_name, user, pwd):
+    def __init__(self, server, port, db_name, user, pwd, trusted_source=False):
+        super(SQLServerDataBase, self).__init__('', '', '', '', '', '', trusted_source)
         self.driver = '{SQL Server}'
         self.server = server
         self.port = port
@@ -126,21 +133,27 @@ class TableVessel:
         self.id_value = id_value
         self.table = table
         self.db = db
-        self.conn = db.get_connection()
 
     # Fills the data package with the relevant data from the database
     def get_data(self):
-        cur = self.conn.cursor()
+        conn = self.db.get_connection()
+        cur = conn.cursor()
         return [make_row_dict(self.get_table_column_names(self.table), row) for row in cur.execute(self.make_get_data_statement())]
 
     def write_data(self, data: List[OrderedDict]):
-        cursor = self.conn.cursor()
+        conn = self.db.get_connection()
+        cursor = conn.cursor()
+        with open(r'F:\CIA_Python\PROD\PythonScripts\AIS-Kalman-Filter\statement.txt', 'w') as log:
+            log.write(self.make_write_data_statement(data))
         cursor.execute(self.make_write_data_statement(data))
         cursor.commit()
+        conn.close()
 
     def truncate_table(self):
-        cursor = self.conn.cursor()
+        conn = self.db.get_connection()
+        cursor = conn.cursor()
         cursor.execute((self.make_truncate_statement()))
+        conn.close()
 
     def make_get_data_statement(self):
         return str(
@@ -149,6 +162,7 @@ class TableVessel:
             .where(self.id_field == self.id_value))
 
     def make_write_data_statement(self, data):
+        fields = str(data[0].keys())
         return str(
             self.db.get_query_base()
             .into(self.table)
@@ -161,11 +175,14 @@ class TableVessel:
 
     # TODO: The constant values in this function (DB_COLUMNS_TABLE, DB_COLUMN_COLUMN_NAME, etc) should probably be made attributes of the DataBase object.
     def get_table_column_names(self, table: Table):
-        q = self.get_query_base()\
+        q = self.db.get_query_base()\
             .from_(DB_COLUMNS_TABLE)\
             .select(DB_COLUMN_COLUMN_NAME)\
             .where(DB_COLUMN_TABLE_NAME_FIELD == table.table_name)
-        return [result[0] for result in self.conn.cursor().execute(str(q))]
+        conn = self.db.get_connection()
+        ret = [result[0] for result in conn.cursor().execute(str(q))]
+        conn.close()
+        return ret
 
 
 def connect_to_db(driver, server, port, dbname, user, pwd):
