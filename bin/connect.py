@@ -1,9 +1,7 @@
 from collections import OrderedDict, Set
 from typing import List
 from pypika import Query, Table, Field
-
-from pypyodbc import connect, Connection
-
+from pypyodbc import connect, Connection, DatabaseError
 from conf.db import DB_COLUMNS_TABLE, DB_COLUMN_COLUMN_NAME, DB_COLUMN_TABLE_NAME_FIELD
 
 
@@ -19,6 +17,7 @@ class DataBase:
 
     def get_connection(self):
         conn_string = "Driver={driver};Server={server};Port={port};Database={dbname};Uid={user};Pwd={pwd};"
+        print('Connecting with the following specs:\n%s' % conn_string)
         conn_string = conn_string.format(
             driver=self.driver, server=self.server, port=self.port, dbname=self.db_name, user=self.user, pwd=self.pwd)
         return connect(conn_string)
@@ -28,14 +27,19 @@ class DataBase:
         q = Query\
             .from_(table)\
             .select(id_field)
-        q = str(q) + ';'
-        q.replace('\"', '')
-        print(q)
+        q = str(q).replace('\"', '')
         results = conn.cursor().execute(q)
+        ret = set([str(result[0]) for result in results])
         conn.close()
-        for result in results:
-            print(result)
-        return Set(results)
+        return ret
+
+    def test_connection(self):
+        try:
+            conn = self.get_connection()
+        except DatabaseError as dbe:
+            print('Connection not working.')
+            return
+        print('Connection healthy.')
 
 
 class PostgreSQLDataBase(DataBase):
@@ -57,6 +61,13 @@ class SQLServerDataBase(DataBase):
         self.user = user
         self.pwd = pwd
 
+    def get_connection(self):
+        conn_string = "Driver={driver};Server={server};Port={port};Database={dbname};Trusted_Connection=yes;"
+        conn_string = conn_string.format(driver=self.driver, port=self.port, server=self.server, dbname=self.db_name)
+        print('Connecting with the following specs:\n%s' % conn_string)
+        return connect(conn_string)
+
+
 class TableVessel:
     """Provides an interface to all values in a database table that correspond to a particular vessel. Those values will be identified by the id field and the id value"""
     def __init__(self, conn: Connection, table: Table, id_field: Field=None, id_value: int=None):
@@ -74,29 +85,33 @@ class TableVessel:
         q = Query\
             .from_(self.table).select('*')\
             .where(self.id_field == self.id_value)
+        q = str(q).replace('\"', '')
         cur = self.conn.cursor()
         return [make_row_dict(column_names(cur), row) for row in cur.execute(str(q))]
 
-    def write_data(self, data: List[OrderedDict], truncate=False):
+    def write_data(self, data: List[OrderedDict], fields, truncate=False):
         cursor = self.conn.cursor()
         if truncate:
             q = self.make_truncate_statement()
             cursor.execute(str(q))
-        q = self.make_write_statement(data)
+        q = self.make_write_statement(data, fields)
+        q = str(q).replace('\"', '')
         print(q)
         cursor.execute(q)
         cursor.commit()
 
-    def make_write_statement(self, data):
+    def make_write_statement(self, data, fields):
+        #[[row[field] for field in fields] for row in data]
         q = Query\
             .into(self.table)\
-            .columns(*self.get_column_names())\
-            .insert(*[[row[field] for field in row.keys()] for row in data])
+            .columns(fields)
+        for row in data:
+            q.insert([row[field] for field in fields])
         return str(q) + ';'
 
     def make_truncate_statement(self):
         template = 'TRUNCATE {schema}{table}'
-        return template.format(schema=self.table.schema, table=self. table.table_name)
+        return template.format(schema=self.table.schema, table=self.table.table_name)
 
     def get_column_names(self):
         return get_table_column_names(self.conn, self.table)
@@ -108,6 +123,9 @@ def get_table_column_names(conn: Connection, table: Table):
         .from_(DB_COLUMNS_TABLE)\
         .select(DB_COLUMN_COLUMN_NAME)\
         .where(DB_COLUMN_TABLE_NAME_FIELD == table.table_name)
+    q = str(q).replace('\".\"', '.')
+    q = 'SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME=\'dbo.stg_vms_test\''
+    print(q)
     return [result[0] for result in conn.cursor().execute(str(q))]
 
 

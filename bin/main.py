@@ -1,13 +1,16 @@
+import sys
+from os import getcwd
+from os.path import join
+cwd = getcwd()
+sys.path.append(join(cwd, '..'))
 from pypika import Table
-from conf.db import server, port, dbname, user, pwd
+from conf.db import server, port, dbname, user, pwd, ID_FIELD, OUTPUT_TABLE, INPUT_TABLE
 from conf.filter import filter_state
-from connect import TableVessel, PostgreSQLDataBase
-from db import ID_FIELD, OUTPUT_TABLE, INPUT_TABLE
+from connect import TableVessel, SQLServerDataBase
 from vms import VMSDataPackage
 from filter import ais_kalman
 
-db = PostgreSQLDataBase(server, port, dbname, user, pwd)
-
+db = SQLServerDataBase(server, port, dbname, user, pwd)
 in_table = Table(INPUT_TABLE)
 out_table = Table(OUTPUT_TABLE)
 ids = db.get_ids(in_table, ID_FIELD)

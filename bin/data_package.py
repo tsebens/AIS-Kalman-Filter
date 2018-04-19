@@ -40,7 +40,8 @@ class DataPackageBase:
             raise NoTableConnectionSpecified('Attempted to write DataPackage payload to DB, but not TableConnection has been specified.')
         if self.filtered_states is None:
             raise AttemptToWriteUnprocessedData('Attempted to write to the DB, but the data hasn\'t been processed yet.')
-        self.out_tbl_conn.write_data(self.make_rows(self.filtered_states))
+        fields = list(self.filtered_states[0].row.keys())
+        self.out_tbl_conn.write_data(self.make_rows(self.filtered_states), fields)
 
     # Returns the values of the payload as a generator of OrderedDicts
     def get_payload(self):
