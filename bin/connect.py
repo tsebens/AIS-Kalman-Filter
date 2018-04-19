@@ -37,6 +37,7 @@ class DataBase:
             print(result)
         return Set(results)
 
+
 class PostgreSQLDataBase(DataBase):
     def __init__(self, server, port, db_name, user, pwd):
         self.driver = '{PostgreSQL Unicode(x64)}'
@@ -46,6 +47,15 @@ class PostgreSQLDataBase(DataBase):
         self.user = user
         self.pwd = pwd
 
+
+class SQLServerDataBase(DataBase):
+    def __init__(self, server, port, db_name, user, pwd):
+        self.driver = '{SQL Server}'
+        self.server = server
+        self.port = port
+        self.db_name = db_name
+        self.user = user
+        self.pwd = pwd
 
 class TableVessel:
     """Provides an interface to all values in a database table that correspond to a particular vessel. Those values will be identified by the id field and the id value"""
