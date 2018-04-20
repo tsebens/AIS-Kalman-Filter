@@ -14,7 +14,7 @@ Static constants
 --------------------------------------------------------------------------------------------
 """
 AVERAGE_HEADING_CHANGE_DEGREES_PER_SECOND = 3
-MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND = 6
+MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND = 0.001
 # Maximum number of degrees a vessel is allowed to change it's heading by between consecutive states
 MAX_ALLOWABLE_TURN_PER_STATE = 25
 

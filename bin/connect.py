@@ -28,14 +28,9 @@ class DataBase:
         q = Query\
             .from_(table)\
             .select(id_field)
-        q = str(q) + ';'
-        q.replace('\"', '')
-        print(q)
-        results = conn.cursor().execute(q)
+        results = conn.cursor().execute(str(q))
         conn.close()
-        for result in results:
-            print(result)
-        return Set(results)
+        return Set(list([result[0] for result in results]))
 
 class PostgreSQLDataBase(DataBase):
     def __init__(self, server, port, db_name, user, pwd):
@@ -62,10 +57,10 @@ class TableVessel:
     # Fills the data package with the relevant data from the database
     def get_data(self):
         q = Query\
-            .from_(self.table).select('*')\
+            .from_(self.table)\
+            .select('*')\
             .where(self.id_field == self.id_value)
-        cur = self.conn.cursor()
-        return [make_row_dict(column_names(cur), row) for row in cur.execute(str(q))]
+        return [make_row_dict(column_names(self.conn.cursor()), row) for row in self.conn.cursor().execute(str(q))]
 
     def write_data(self, data: List[OrderedDict], truncate=False):
         cursor = self.conn.cursor()
@@ -73,7 +68,6 @@ class TableVessel:
             q = self.make_truncate_statement()
             cursor.execute(str(q))
         q = self.make_write_statement(data)
-        print(q)
         cursor.execute(q)
         cursor.commit()
 

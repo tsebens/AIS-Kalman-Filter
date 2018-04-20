@@ -79,12 +79,12 @@ def est_head_max_turn_per_sec(filter_state:FilterState, curr_state:VesselState, 
         return pred_heading
 
 
-# Enforces a rule that the boat's location cannot change more than is mathematically reasonable based on
+# Enforces a rule that the boat's location cannot change more than is mathematically possible based on
 # it's course and speed.
 # The grace factor is a measure of how flexible we are willing to be with this rule
 # If, for example, the grace factor is 1.5, then a distance which is less than or equal to
 # 1.5 times the expected distance would be considered acceptable
-def est_loc_max_dis(filter_state:FilterState, curr_state:VesselState, prev_state:VesselState, grace_fact=1.25):
+def est_loc_max_dis(filter_state: FilterState, curr_state: VesselState, prev_state: VesselState, grace_fact=1.25):
     # First we get our default estimation, then we compare that to our rules
     est_location = default_location_estimate(filter_state, curr_state, prev_state)
     # Now we get the vector between our new estimate and our estimated location from the previous state
