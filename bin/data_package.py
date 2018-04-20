@@ -1,22 +1,8 @@
 from collections import OrderedDict
 
 from connect import TableVessel
-
-
-class NoTableConnectionSpecified(Exception):
-    pass
-
-
-class UseOfAbstractForm(Exception):
-    pass
-
-
-class AttemptToWriteUnprocessedData(Exception):
-    pass
-
-
-class AttemptToReadUnprocessedData(Exception):
-    pass
+from exceptions import NoTableConnectionSpecified, UseOfAbstractForm, AttemptToWriteUnprocessedData, \
+    AttemptToReadUnprocessedData
 
 
 # TODO: Still needs a fair amount of work ironing out the data loading process.
