@@ -105,8 +105,8 @@ def make_timestamp_from_vms_value(timestamp):
         # If the data has been read frm a database, then it will already be in datetime
         return timestamp
     date, time = timestamp.split(' ')
-    month, day, year = date.split('/')
-    hour, minute = time.split(':')
+    year, month, day = date.split('-')
+    hour, minute, second = time.split(':')
     return datetime(day=int(day), month=int(month), year=int(year), hour=int(hour), minute=int(minute), tzinfo=UTC)
 
 
