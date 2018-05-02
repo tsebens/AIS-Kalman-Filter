@@ -1,6 +1,6 @@
 from calculate import angle_between, rotate_vector, vector_between_two_points, vector_length
 from conf.static import MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND, \
-    MAX_ALLOWABLE_VESSEL_ACCELERATION_METERS_PER_SECOND, MAX_ALLOWABLE_TURN_PER_STATE
+    MAX_ALLOWABLE_VESSEL_ACCELERATION_METERS_PER_SECOND, MAX_ALLOWABLE_TURN_PER_STATE, MAX_ALLOWABLE_VESSEL_SPEED
 from convert import make_est_from_meas_pred_and_fact, seconds_passed_between_states
 from state import VesselState, FilterState
 
@@ -47,11 +47,12 @@ def default_location_estimate(filter_state: FilterState, curr_state: VesselState
 def est_SoG_max_spd_per_sec(filter_state:FilterState, curr_state:VesselState, prev_state:VesselState, max_acc=MAX_ALLOWABLE_VESSEL_ACCELERATION_METERS_PER_SECOND):
     time_passed = curr_state.timestamp - prev_state.timestamp
     max_spd_change = max_acc * time_passed.total_seconds()
+    meas_speed = curr_state.SoG_state.meas
 
-    return min(
-        default_SoG_estimate(filter_state, curr_state, prev_state),
-        prev_state.SoG_state.est + max_spd_change
-    )
+    default = max(default_SoG_estimate(filter_state, curr_state, prev_state), 0)
+    max_change = max(prev_state.SoG_state.est + max_spd_change, 0)
+
+    return min(default, max_change)
 
 
 # Estimate the new heading based on the prediction, and the measurement, but with the rule that the
@@ -84,7 +85,7 @@ def est_head_max_turn_per_sec(filter_state:FilterState, curr_state:VesselState, 
 # The grace factor is a measure of how flexible we are willing to be with this rule
 # If, for example, the grace factor is 1.5, then a distance which is less than or equal to
 # 1.5 times the expected distance would be considered acceptable
-def est_loc_max_dis(filter_state: FilterState, curr_state: VesselState, prev_state: VesselState, grace_fact=1.25):
+def est_loc_max_dis(filter_state: FilterState, curr_state: VesselState, prev_state: VesselState, max_speed=MAX_ALLOWABLE_VESSEL_SPEED, grace_fact=1.25):
     # First we get our default estimation, then we compare that to our rules
     est_location = default_location_estimate(filter_state, curr_state, prev_state)
     # Now we get the vector between our new estimate and our estimated location from the previous state
@@ -94,7 +95,7 @@ def est_loc_max_dis(filter_state: FilterState, curr_state: VesselState, prev_sta
     # This is the crux of it. If this distance is too large, then we have to intervene.
     # First we calculate our max allowable distance
     total_seconds = seconds_passed_between_states(curr_state, prev_state)
-    max_allowable_distance = prev_state.SoG_state.est * total_seconds * grace_fact
+    max_allowable_distance = max_speed * total_seconds * grace_fact
     if distance > max_allowable_distance:
         # The default estimate violates the rule's constraints. We have to recalculate a value that is within our bounds
         # We calculate a new estimated location, which is equal to where the boat would have been if it

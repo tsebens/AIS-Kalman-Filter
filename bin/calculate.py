@@ -35,3 +35,7 @@ def vector_between_two_points(p1, p2):
 # Return the length of a vector
 def vector_length(v1):
     return np.linalg.norm(v1)
+
+
+def distance_between_two_points(p1, p2):
+    return vector_length(vector_between_two_points(p1,p2))

@@ -41,6 +41,9 @@ def lat_lon_to_loc_vector(point, lat_fn='AA_LAT', lon_fn='AA_LON'):
 def knts_to_mps(knts):
     return knts * knts_to_mps_conv_fact
 
+def mps_to_knts(mps):
+    return mps / knts_to_mps_conv_fact
+
 
 # Makes a state in which for all VarStates, the estimated and predicted values are the same as the measured values
 # Essentially make a state in which we must assume that the measured values are 100% accurate.
@@ -81,4 +84,11 @@ def seconds_passed_between_states(curr_state:VesselState, prev_state:VesselState
 def seconds_passed_between_datetimes(dt1: datetime, dt2: datetime):
     dv = dt1 - dt2
     return dv.total_seconds()
-    
+
+
+# Creates an ordered dict object from a list of fields and a list of values.
+def row_to_dict(fields, row):
+    row_dict = {}
+    for i in range(len(fields)):
+        row_dict[fields[i]] = row[i]
+    return row_dict
