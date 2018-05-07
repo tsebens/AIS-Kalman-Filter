@@ -1,3 +1,5 @@
+from csv import DictReader
+
 import numpy as np
 from datetime import datetime
 from calculate import unit_vector, vector_between_two_points, vector_length, distance_between_two_points
@@ -5,10 +7,14 @@ from convert import seconds_passed_between_datetimes
 from data_package import DataPackageBase
 from project import convert_aa_to_loc, convert_loc_to_aa
 from state import VesselState, VarState
+from static import MAX_ALLOWABLE_VESSEL_SPEED
 from timezones import UTC
 
 VMS_LON_FIELD = 'LONGITUDE'
 VMS_LAT_FIELD = 'LATITUDE'
+
+def is_invalid(val):
+    return np.isnan(val) or np.isinf(val)
 
 
 class VMSDataPackage(DataPackageBase):
@@ -79,6 +85,10 @@ def get_loc_from_vms(row, lat_fn: str=VMS_LAT_FIELD, lon_fn: str=VMS_LON_FIELD):
     lat = float(row[lat_fn])
     lon = float(row[lon_fn])
     lon, lat = convert_loc_to_aa(lon, lat)
+    if is_invalid(lat):
+        lat = 0
+    if is_invalid(lon):
+        lon = 0
     # VMS data is recorded in regular old geographic coordinates (ESPG:4326)
     # We want it in Alaska Albers, both because AA is measured in meters (works well for speed)
     # AND because AA is an equal-area conic projection, meaning we wont see any distortion of unit
@@ -89,7 +99,12 @@ def get_loc_from_vms(row, lat_fn: str=VMS_LAT_FIELD, lon_fn: str=VMS_LON_FIELD):
 def get_head_from_vms(curr_row, prev_row, lat_fn: str=VMS_LAT_FIELD, lon_fn: str=VMS_LON_FIELD):
     prev_loc = get_loc_from_vms(curr_row, lat_fn=lat_fn, lon_fn=lon_fn)
     curr_loc = get_loc_from_vms(prev_row, lat_fn=lat_fn, lon_fn=lon_fn)
-    return unit_vector(vector_between_two_points(prev_loc, curr_loc))
+    head = unit_vector(vector_between_two_points(prev_loc, curr_loc))
+    if np.isnan(head[0]):
+        head[0] = 0
+    if np.isnan(head[1]):
+        head[1] = 0
+    return head
 
 
 def get_SoG_from_vms(curr_row, prev_row, lat_fn: str=VMS_LAT_FIELD, lon_fn: str=VMS_LON_FIELD):
@@ -102,6 +117,12 @@ def get_SoG_from_vms(curr_row, prev_row, lat_fn: str=VMS_LAT_FIELD, lon_fn: str=
     time = seconds_passed_between_datetimes(ts1, ts2)
     distance = distance_between_two_points(prev_loc, curr_loc)
     speed = distance/time
+    if np.isnan(speed):
+        # If the values are small enough, our division will yield a NaN value, or an inf value. In that case we can
+        # simply assign the value to zero
+        speed = 0
+    if np.isinf(speed):
+        speed = MAX_ALLOWABLE_VESSEL_SPEED
     return speed
 
 
@@ -117,3 +138,15 @@ def make_timestamp_from_vms_value(timestamp):
 
 def get_timestamp_from_vms(curr_row, ts_fn='POSITION_DATETIME'):
     return make_timestamp_from_vms_value(curr_row[ts_fn])
+
+
+class CSV_VMSDataPackage(VMSDataPackage):
+    def __init__(self, csv_fp: str):
+        self.payload = None
+        self.filtered_states = None
+        self.csv_fp = csv_fp
+
+    def load_payload(self):
+        with open(self.csv_fp) as file:
+            reader = DictReader(file) # todo: maybe this could be refactored to a factory method?
+            self.payload = [row for row in reader]

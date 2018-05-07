@@ -16,7 +16,6 @@ def ais_kalman(vessel_states, filter_state: FilterState):
     prev_state = make_initial_filter_state(vessel_states.__next__())
     # Now, for every data point we have (skipping the first one since we've already loaded those values) we use the
     # Kalman filter to estimate the true location of our vessel.
-    count = 0
     for curr_state in vessel_states:
         # Now we can make our predictions for location, heading, and SoG
         prediction_step(curr_state, prev_state, filter_state)
@@ -26,16 +25,7 @@ def ais_kalman(vessel_states, filter_state: FilterState):
         filtered_states.append(prev_state)
         # yield prev_state # todo: Implement this later. Make the filter into a generator, rather than a list-to-list conversion
         # Reset the state variable for the next iteration
-        distance = distance_between_two_points(curr_state.loc_state.meas, prev_state.loc_state.meas)
-        time = seconds_passed_between_states(curr_state, prev_state)
-        speed = distance/time
-        print('---------------')
-        print('%s' % count)
-        print('Speed derived from measured values: %s m/s  --  %s knts' % (speed, mps_to_knts(speed)))
-        print('Speed according to vessel state:    %s m/s  --  %s knts' % (curr_state.SoG_state.meas, mps_to_knts(curr_state.SoG_state.meas)))
-        print('Estimated vessel speed:             %s m/s  --  %s knts' % (curr_state.SoG_state.est, mps_to_knts(curr_state.SoG_state.est)))
         prev_state = curr_state
-        count += 1
     return filtered_states
 
 

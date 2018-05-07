@@ -1,8 +1,9 @@
-from calculate import angle_between, rotate_vector, vector_between_two_points, vector_length
+from calculate import angle_between, rotate_vector, vector_between_two_points, vector_length, unit_vector
 from conf.static import MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND, \
     MAX_ALLOWABLE_VESSEL_ACCELERATION_METERS_PER_SECOND, MAX_ALLOWABLE_TURN_PER_STATE, MAX_ALLOWABLE_VESSEL_SPEED
 from convert import make_est_from_meas_pred_and_fact, seconds_passed_between_states
 from state import VesselState, FilterState
+from static import DEFAULT_GRACE_FACTOR
 
 '''
 The estimation step is where we combine what we predicted about the state of the vessel with what we measured, and do so 
@@ -44,22 +45,24 @@ def default_location_estimate(filter_state: FilterState, curr_state: VesselState
 
 # Returns the SoG estimate, but caps the estimate under the rule that the vessel cannot gain more than
 # max_acc knts per second of acceleration. It is assumed that a boat can lose speed as quickly as it likes.
-def est_SoG_max_spd_per_sec(filter_state:FilterState, curr_state:VesselState, prev_state:VesselState, max_acc=MAX_ALLOWABLE_VESSEL_ACCELERATION_METERS_PER_SECOND):
+def est_SoG_max_spd_per_sec(filter_state:FilterState, curr_state:VesselState, prev_state:VesselState,
+                            max_acc=MAX_ALLOWABLE_VESSEL_ACCELERATION_METERS_PER_SECOND, grace_fact=DEFAULT_GRACE_FACTOR):
     time_passed = curr_state.timestamp - prev_state.timestamp
     max_spd_change = max_acc * time_passed.total_seconds()
     meas_speed = curr_state.SoG_state.meas
 
     default = max(default_SoG_estimate(filter_state, curr_state, prev_state), 0)
-    max_change = max(prev_state.SoG_state.est + max_spd_change, 0)
+    max_change = max((prev_state.SoG_state.est + max_spd_change) * grace_fact, 0)
 
     return min(default, max_change)
 
 
 # Estimate the new heading based on the prediction, and the measurement, but with the rule that the
 # heading can only change so fast.
-def est_head_max_turn_per_sec(filter_state:FilterState, curr_state:VesselState, prev_state:VesselState, max_turn=MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND):
+def est_head_max_turn_per_sec(filter_state:FilterState, curr_state:VesselState, prev_state:VesselState,
+                              max_turn=MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND, grace_fact=DEFAULT_GRACE_FACTOR):
     total_seconds = seconds_passed_between_states(curr_state, prev_state)
-    max_head_change = max_turn * total_seconds
+    max_head_change = (max_turn * total_seconds) * grace_fact
     # First we make our usual estimate, then we compare that to our rules.
     pred_heading = default_heading_estimate(filter_state, curr_state, prev_state)
     # If the predicted heading would exceed the allowable heading change,
@@ -85,7 +88,8 @@ def est_head_max_turn_per_sec(filter_state:FilterState, curr_state:VesselState, 
 # The grace factor is a measure of how flexible we are willing to be with this rule
 # If, for example, the grace factor is 1.5, then a distance which is less than or equal to
 # 1.5 times the expected distance would be considered acceptable
-def est_loc_max_dis(filter_state: FilterState, curr_state: VesselState, prev_state: VesselState, max_speed=MAX_ALLOWABLE_VESSEL_SPEED, grace_fact=1.25):
+def est_loc_max_dis(filter_state: FilterState, curr_state: VesselState, prev_state: VesselState,
+                    max_speed=MAX_ALLOWABLE_VESSEL_SPEED, grace_fact=DEFAULT_GRACE_FACTOR):
     # First we get our default estimation, then we compare that to our rules
     est_location = default_location_estimate(filter_state, curr_state, prev_state)
     # Now we get the vector between our new estimate and our estimated location from the previous state
@@ -100,7 +104,14 @@ def est_loc_max_dis(filter_state: FilterState, curr_state: VesselState, prev_sta
         # The default estimate violates the rule's constraints. We have to recalculate a value that is within our bounds
         # We calculate a new estimated location, which is equal to where the boat would have been if it
         # maintained it's course, and moved the maximum allowable distance.
-        est_location = prev_state.loc_state.est + prev_state.head_state.est * max_allowable_distance
+        # First we need to find the unit vector from our current location to the estimate
+        dir_to_est = unit_vector( # todo: Figure out why this has to be inverted. It doesn't work without it.
+            vector_between_two_points(
+                est_location,
+                prev_state.loc_state.est
+            )
+        )
+        est_location = prev_state.loc_state.est + dir_to_est * max_allowable_distance
     return est_location
 
 

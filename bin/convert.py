@@ -3,7 +3,7 @@ from math import tan, radians
 import numpy as np
 from datetime import datetime
 
-from conf.static import knts_to_mps_conv_fact
+from conf.static import KNTS_TO_MPS_CONV_FACT
 from state import VarState, VesselState
 from timezones import UTC
 
@@ -39,10 +39,10 @@ def lat_lon_to_loc_vector(point, lat_fn='AA_LAT', lon_fn='AA_LON'):
 
 # Convert knots to meters per second
 def knts_to_mps(knts):
-    return knts * knts_to_mps_conv_fact
+    return knts * KNTS_TO_MPS_CONV_FACT
 
 def mps_to_knts(mps):
-    return mps / knts_to_mps_conv_fact
+    return mps / KNTS_TO_MPS_CONV_FACT
 
 
 # Makes a state in which for all VarStates, the estimated and predicted values are the same as the measured values
