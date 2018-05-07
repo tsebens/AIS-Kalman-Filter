@@ -10,6 +10,8 @@ plt.show()
 def show_plot():
     plot.show()
 
+def clear():
+    plot.clf()
 
 def plot_points(points, style):
     xs = [pt[0] for pt in points]
@@ -42,14 +44,57 @@ def plot_b_func(points):
 '''
 Accepts lists of vessel states and creates a plot from them
 '''
-def make_plot(states, delay=0, b_func=None):
+def make_plot(states, delay=0, b_func=None, title: str=None, save: str=None):
     plot_loc_data([state.loc_state.meas for state in states])
     plot_loc_predictions([state.loc_state.pred for state in states])
     plot_loc_estimates([state.loc_state.est for state in states])
-    plot.pause(delay)
+    for label, x, y in zip(
+            ['Meas %s' % i for i in range(len(states))],
+            [state.loc_state.meas[0] for state in states],
+            [state.loc_state.meas[1] for state in states]
+    ):
+        if int(label[5:]) % 10 == 0:
+            plot.annotate(
+                label,
+                xy=(x, y), xytext=(-20, 20),
+                textcoords='offset points', ha='right', va='bottom',
+                bbox=dict(boxstyle='round,pad=0.5', fc='black', alpha=0.5),
+                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
+    for label, x, y in zip(
+            ['Pred %s' % i for i in range(len(states))],
+            [state.loc_state.pred[0] for state in states],
+            [state.loc_state.pred[1] for state in states]
+    ):
+        if int(label[5:]) % 10 == 0:
+            plot.annotate(
+                label,
+                xy=(x, y), xytext=(-20, 20),
+                textcoords='offset points', ha='right', va='bottom',
+                bbox=dict(boxstyle='round,pad=0.5', fc='blue', alpha=0.5),
+                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
+    for label, x, y in zip(
+            ['Est %s' % i for i in range(len(states))],
+            [state.loc_state.est[0] for state in states],
+            [state.loc_state.est[1] for state in states]
+    ):
+        if int(label[4:]) % 10 == 0:
+            plot.annotate(
+                label,
+                xy=(x, y), xytext=(-20, 20),
+                textcoords='offset points', ha='right', va='bottom',
+                bbox=dict(boxstyle='round,pad=0.5', fc='red', alpha=0.5),
+                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
+    if delay > 0:
+        plot.pause(delay)
     if b_func is not None:
         b_vals = [b_func(state.loc_state.meas[0]) for state in states]
         plot_b_func(b_vals)
+    if title is not None:
+        plot.suptitle(title, fontsize=16)
+    if save is not None:
+        plot.savefig(save, format='png', dpi=1000)
+        plot.clf()
+
 
 '''
 Same as make_plot, but it plots the point in a step by step manner
@@ -60,7 +105,8 @@ def make_iterative_plot(v_states, b_func=None, delay=0):
     plot.grid()
     for i in range(1, len(v_states)):
         states = v_states[:i]
-        make_plot(states, b_func=b_func, delay=delay)
+        make_plot(states, b_func=b_func)
+        plot.pause(delay)
 
 def make_comparison_plot(loc_data, loc_estimates, loc_predictions, head_data, head_estimates, head_predicitions, func):
     plot.grid()
