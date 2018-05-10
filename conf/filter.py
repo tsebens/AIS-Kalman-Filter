@@ -1,5 +1,5 @@
 from estimation import est_loc_max_dis, est_head_max_turn_per_sec, est_SoG_max_spd_per_sec, default_location_estimate, \
-    default_SoG_estimate
+    default_SoG_estimate, est_loc_ignore_heading_max_distance
 from prediction import default_location_prediction, default_heading_prediction, default_SoG_prediction
 from state import FactorState, FunctionState, FilterState
 """
@@ -19,7 +19,7 @@ factor_state = FactorState(
 """These function states define the functions that will be used for the prediction and estimation steps of the filter."""
 location_functions = FunctionState(
     predict=default_location_prediction,
-    estimate=est_loc_max_dis
+    estimate=est_loc_ignore_heading_max_distance
 )
 heading_functions = FunctionState(
     predict=default_heading_prediction,
