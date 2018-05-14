@@ -118,7 +118,7 @@ def est_loc_max_dis(filter_state: FilterState, curr_state: VesselState, prev_sta
 # Similar to est_head_max_turn_per_sec, except this function does not consider the time passed. According to
 # this estimation function, the vessel is not capable of turning more that max_turn degrees between states,
 # irregardless of the amount of time that has passed.
-def est_head_max_turn(filter_state:FilterState, curr_state:VesselState, prev_state:VesselState, max_turn=MAX_ALLOWABLE_TURN_PER_STATE):
+def est_head_max_turn(filter_state:FilterState, curr_state: VesselState, prev_state: VesselState, max_turn=MAX_ALLOWABLE_TURN_PER_STATE):
     max_head_change = max_turn
     # First we make our usual estimate, then we compare that to our rules.
     est_heading = default_heading_estimate(filter_state, curr_state, prev_state)
@@ -138,3 +138,33 @@ def est_head_max_turn(filter_state:FilterState, curr_state:VesselState, prev_sta
     else:
         # If we reach this point, then the predicted heading is within allowable tolerances.
         return est_heading
+
+
+def est_loc_ignore_heading_max_distance(filter_state: FilterState, curr_state: VesselState, prev_state: VesselState,
+       max_speed=MAX_ALLOWABLE_VESSEL_SPEED):
+    # We put our estimate on the measured location of this point
+    est_location = curr_state.loc_state.meas
+    # Now we get the vector between our new estimate and our estimated location from the previous state
+    delta_v = vector_between_two_points(prev_state.loc_state.est, est_location)
+    # The length of delta_v represents the distance we travelled
+    distance = vector_length(delta_v)
+    # This is the crux of it. If this distance is too large, then we have to intervene.
+    # First we calculate our max allowable distance
+    total_seconds = seconds_passed_between_states(curr_state, prev_state)
+    max_allowable_distance = max_speed * total_seconds
+    if distance > max_allowable_distance:
+        # The default estimate violates the rule's constraints. We have to recalculate a value that is within our bounds
+        # We calculate a new estimated location, which is equal to where the boat would have been if it
+        # maintained it's course, and moved the maximum allowable distance.
+        # First we need to find the unit vector from our current location to the estimate
+        dir_to_est = unit_vector(  # todo: Figure out why this has to be inverted. It doesn't work without it.
+            vector_between_two_points(
+                est_location,
+                prev_state.loc_state.est
+            )
+        )
+        est_location = prev_state.loc_state.est + dir_to_est * max_allowable_distance
+    return est_location
+
+
+
