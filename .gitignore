@@ -1444,3 +1444,5 @@ bin/__pycache__/data_package.cpython-36.pyc
 conf/__pycache__/filter.cpython-36.pyc
 conf/__pycache__/db.cpython-36.pyc
 conf/__pycache__/static.cpython-36.pyc
+ais_data/
+bin/__pycache__/exceptions.cpython-36.pyc

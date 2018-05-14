@@ -5,16 +5,16 @@ Database connection configuration
 --------------------------------------------------------------------------------------------
 """
 
-server = 'akr-j98\PROD'
-port = '1433'
-dbname = 'CATCH_IN_AREAS'
-user = ''
+server = 'localhost'
+port = '6000'
+dbname = 'kalman'
+user = 'tristan.sebens'
 pwd = ''
 
-# The table where the filter will look for inputs
-OUTPUT_TABLE = Table('stg_vms_test', schema='dbo')
 # The table where the filter will write it's outputs
-INPUT_TABLE = Table('STG_VMS', schema='dbo')
+INPUT_TABLE = Table('PROBLEM_VMS_DATASET', schema='public')
+# The table where the filter will look for inputs
+OUTPUT_TABLE = Table('stg_vms_test', schema='public')
 # The field the filter will use to distinguish individual vessels
 ID_FIELD = Field("VESSEL_ID")
 

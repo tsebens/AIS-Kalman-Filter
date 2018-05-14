@@ -35,3 +35,25 @@ def vector_between_two_points(p1, p2):
 # Return the length of a vector
 def vector_length(v1):
     return np.linalg.norm(v1)
+
+
+def distance_between_two_points(p1, p2):
+    return vector_length(vector_between_two_points(p1,p2))
+    
+    
+def rmse(predictions, targets):
+    """Returns the root mean squared error of two sets of points"""
+    diff = np.subtract(np.array(predictions), np.array(targets))
+    rmse = np.sqrt(diff ** 2).mean()
+    if np.isnan(rmse):
+        return 0
+    if np.isinf(rmse):
+        return 'inf'
+    return rmse
+    
+    
+def rmse_of_states(states):
+    return rmse(
+        [state.loc_state.est for state in states],
+        [state.loc_state.meas for state in states]
+    )
