@@ -1,5 +1,6 @@
 import numpy as np
 
+from calculate import unit_vector, vector_between_two_points
 from convert import seconds_passed_between_states
 
 '''
@@ -31,8 +32,3 @@ def default_location_prediction(curr_state, prev_state):
     # We assume that a vessels location is a direct and exact product of it's previous location, heading, and speed.
     t = seconds_passed_between_states(curr_state, prev_state)
     return np.add(prev_state.loc_state.est, prev_state.head_state.est * prev_state.SoG_state.est * t)
-
-
-
-
-
