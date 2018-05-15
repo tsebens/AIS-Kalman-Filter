@@ -78,6 +78,7 @@ def make_init_state_from_vms(init_row_1, init_row_2):
 def make_row_from_vms_state(state: VesselState):
     row = state.row
     row['filt_lon'], row['filt_lat'] = convert_aa_to_loc(state.loc_state.est[0], state.loc_state.est[1])
+    row['flagged_by_filter'] = state.is_flagged
     return row
 
 

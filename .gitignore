@@ -1447,3 +1447,6 @@ conf/__pycache__/static.cpython-36.pyc
 ais_data/PROBLEM_DATASET.csv
 ais_data/
 bin/__pycache__/exceptions.cpython-36.pyc
+bin/__pycache__/main.cpython-36.pyc
+bin/__pycache__/vessel_state.cpython-36.pyc
+bin/pycallgraph.png

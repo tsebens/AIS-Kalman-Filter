@@ -35,8 +35,7 @@ for data_package in data_packages:
     name = 'RMSE - %s ID - %s' % (rms, fname)
     out_fp = join(ph_d, name + '.png')
     make_plot(data_package.get_filtered_states(), title='RMS: %s' % rms)
-    show_plot()
-    clear()
+    data_package.write_payload()
 
 '''
 db = PostgreSQLDataBase(server, port, dbname, user, pwd, verbose=True)
