@@ -20,6 +20,7 @@ class VesselState:
         self.SoG_state = SoG_state
         self.timestamp = timestamp
         self.row=row
+        self.is_flagged = False
 
 
 # Value object to hold the various factors used during the filter's processing

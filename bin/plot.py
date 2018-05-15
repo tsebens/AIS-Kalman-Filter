@@ -48,12 +48,24 @@ def make_plot(states, delay=0, b_func=None, title: str=None, save: str=None):
     plot_loc_data([state.loc_state.meas for state in states])
     plot_loc_predictions([state.loc_state.pred for state in states])
     plot_loc_estimates([state.loc_state.est for state in states])
+    flagged_states = [state for state in states if state.is_flagged == True]
+    for label, x, y in zip(
+            ['FLAGGED' for i in range(len(flagged_states))],
+            [state.loc_state.meas[0] for state in flagged_states],
+            [state.loc_state.meas[1] for state in flagged_states]
+    ):
+        plot.annotate(
+            label,
+            xy=(x, y), xytext=(-20, 20),
+            textcoords='offset points', ha='left', va='bottom',
+            bbox=dict(boxstyle='round,pad=0.5', fc='green', alpha=0.5),
+            arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
     for label, x, y in zip(
             ['Meas %s' % i for i in range(len(states))],
             [state.loc_state.meas[0] for state in states],
             [state.loc_state.meas[1] for state in states]
     ):
-        if int(label[5:]) % 10 == 0:
+        if int(label[5:]) % 2 == 0:
             plot.annotate(
                 label,
                 xy=(x, y), xytext=(-20, 20),
@@ -69,7 +81,7 @@ def make_plot(states, delay=0, b_func=None, title: str=None, save: str=None):
             plot.annotate(
                 label,
                 xy=(x, y), xytext=(-20, 20),
-                textcoords='offset points', ha='right', va='bottom',
+                textcoords='offset points', ha='right', va='top',
                 bbox=dict(boxstyle='round,pad=0.5', fc='blue', alpha=0.5),
                 arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
     for label, x, y in zip(
@@ -81,7 +93,7 @@ def make_plot(states, delay=0, b_func=None, title: str=None, save: str=None):
             plot.annotate(
                 label,
                 xy=(x, y), xytext=(-20, 20),
-                textcoords='offset points', ha='right', va='bottom',
+                textcoords='offset points', ha='left', va='top',
                 bbox=dict(boxstyle='round,pad=0.5', fc='red', alpha=0.5),
                 arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
     if delay > 0:

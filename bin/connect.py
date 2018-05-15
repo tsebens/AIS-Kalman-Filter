@@ -150,7 +150,9 @@ class TableVessel:
     def get_data(self):
         conn = self.db.get_connection()
         cursor = conn.cursor()
-        cursor = cursor.execute(self.make_get_data_statement())
+        stmt = self.make_get_data_statement()
+        print(stmt)
+        cursor = cursor.execute(stmt)
         fields = self.db.get_table_column_names(self.table)
         for row in cursor:
             yield row_to_dict(fields, row)
