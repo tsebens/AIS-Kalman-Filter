@@ -59,7 +59,6 @@ def flag_state(curr_state, prev_state):
     time_passed = seconds_passed_between_states(curr_state, prev_state)
     required_speed = distance / time_passed
     if required_speed > 1.5 * MAX_ALLOWABLE_VESSEL_SPEED:    
-        print('D: %s - T: %s - RqSp: %s' % (distance, time_passed, required_speed))
         curr_state.is_flagged = True
     return curr_state
 

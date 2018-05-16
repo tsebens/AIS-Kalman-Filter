@@ -160,8 +160,6 @@ class TableVessel:
     def write_data(self, data: List[OrderedDict]):
         conn = self.db.get_connection()
         cursor = conn.cursor()
-        with open(r'F:\CIA_Python\PROD\PythonScripts\AIS-Kalman-Filter\statement.txt', 'w') as log:
-            log.write(self.make_write_data_statement(data))
         cursor.execute(self.make_write_data_statement(data))
         cursor.commit()
         conn.close()
@@ -173,19 +171,19 @@ class TableVessel:
         conn.close()
 
     def make_get_data_statement(self):
-        q = str(
+        return str(
             self.db.get_query_base()
             .from_(self.table).select('*')
             .where(self.id_field == self.id_value))
-        return q
+
 
     def make_write_data_statement(self, data):
-        fields = str(data[0].keys())
+        fields = self.db.get_table_column_names(self.table)
         return str(
             self.db.get_query_base()
             .into(self.table)
-            .columns(*self.get_table_column_names(self.table))
-            .insert(*[[row[field] for field in row.keys()] for row in data]))
+            .columns(*fields)
+            .insert(*[[row[field] for field in fields] for row in data]))
 
     def make_truncate_statement(self):
         template = 'TRUNCATE {schema}{table}'
