@@ -184,7 +184,7 @@ class TableVessel:
             .into(self.table)
             .columns(*fields)
             .insert(*[[row[field] for field in fields] for row in data]))
-
+        
     def make_truncate_statement(self):
         template = 'TRUNCATE {schema}{table}'
         return template.format(schema=self.table.schema, table=self.table.table_name)

@@ -12,9 +12,9 @@ user = ''
 pwd = ''
 
 # The table where the filter will look for inputs
-INPUT_TABLE = Table('STG_VMS', schema='dbo')
+INPUT_TABLE = Table('VMS', schema='dbo')
 # The table where the filter will write it's outputs
-OUTPUT_TABLE = Table('stg_vms_test', schema='dbo')
+OUTPUT_TABLE = Table('VMS_Filter', schema='dbo')
 # The field the filter will use to distinguish individual vessels
 ID_FIELD = Field("VESSEL_ID")
 
