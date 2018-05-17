@@ -1,6 +1,5 @@
 # Kalman filter
-from calculate import distance_between_two_points
-from convert import make_initial_filter_state, seconds_passed_between_states, mps_to_knts
+from convert import make_initial_filter_state
 from state import FilterState, VesselState
 from conf.static import MAX_ALLOWABLE_VESSEL_SPEED
 
@@ -20,7 +19,7 @@ def ais_kalman(vessel_states, filter_state: FilterState):
     # Kalman filter to estimate the true location of our vessel.
     for curr_state in vessel_states:
         # Now we can make our predictions for location, heading, and SoG
-        prediction_step(curr_state, prev_state, filter_state)
+        predict_step(curr_state, prev_state, filter_state)
         # Now that we have all of our predictions, we will compare them to our measurements, and create our new estimates.
         estimate_step(curr_state, prev_state, filter_state)
         # If the point is outside of the bounds we set, flag it.
@@ -44,7 +43,7 @@ def estimate_step(curr_state: VesselState, prev_state: VesselState, filter_state
         filter_state.location_functions.estimate(filter_state, curr_state, prev_state)
 
 
-def prediction_step(curr_state: VesselState, prev_state: VesselState, filter_state: FilterState):
+def predict_step(curr_state: VesselState, prev_state: VesselState, filter_state: FilterState):
     curr_state.head_state.pred = \
         filter_state.heading_functions.predict(curr_state, prev_state)
     curr_state.SoG_state.pred = \
