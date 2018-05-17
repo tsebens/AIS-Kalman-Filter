@@ -2,16 +2,16 @@ from csv import DictReader
 
 import numpy as np
 from datetime import datetime
-from calculate import unit_vector, vector_between_two_points, vector_length, distance_between_two_points
+from calculate import unit_vector, vector_between_two_points, distance_between_two_points
 from convert import seconds_passed_between_datetimes
 from data_package import DataPackageBase
+from db import LON_FIELD_NAME, LAT_FIELD_NAME, TIMESTAMP_FIELD_NAME, OUTPUT_LAT_FIELD_NAME, OUTPUT_LON_FIELD_NAME, \
+    OUTPUT_DEV_FIELD_NAME
 from project import convert_aa_to_loc, convert_loc_to_aa
 from state import VesselState, VarState
 from static import MAX_ALLOWABLE_VESSEL_SPEED
 from timezones import UTC
 
-VMS_LON_FIELD = 'LONGITUDE'
-VMS_LAT_FIELD = 'LATITUDE'
 
 def is_invalid(val):
     return np.isnan(val) or np.isinf(val)
@@ -77,11 +77,15 @@ def make_init_state_from_vms(init_row_1, init_row_2):
 
 def make_row_from_vms_state(state: VesselState):
     row = state.row
-    row['filt_lon'], row['filt_lat'] = convert_aa_to_loc(state.loc_state.est[0], state.loc_state.est[1])
+    row[OUTPUT_LON_FIELD_NAME], row[OUTPUT_LAT_FIELD_NAME] = convert_aa_to_loc(state.loc_state.est[0], state.loc_state.est[1])
+    row[OUTPUT_DEV_FIELD_NAME] = distance_between_two_points(
+        state.loc_state.meas,
+        state.loc_state.est
+    )
     return row
 
 
-def get_loc_from_vms(row, lat_fn: str=VMS_LAT_FIELD, lon_fn: str=VMS_LON_FIELD):
+def get_loc_from_vms(row, lat_fn: str=LAT_FIELD_NAME, lon_fn: str=LON_FIELD_NAME):
     lat = float(row[lat_fn])
     lon = float(row[lon_fn])
     lon, lat = convert_loc_to_aa(lon, lat)
@@ -96,7 +100,7 @@ def get_loc_from_vms(row, lat_fn: str=VMS_LAT_FIELD, lon_fn: str=VMS_LON_FIELD):
     return np.array([lon, lat])
 
 
-def get_head_from_vms(curr_row, prev_row, lat_fn: str=VMS_LAT_FIELD, lon_fn: str=VMS_LON_FIELD):
+def get_head_from_vms(curr_row, prev_row, lat_fn: str=LAT_FIELD_NAME, lon_fn: str=LON_FIELD_NAME):
     prev_loc = get_loc_from_vms(curr_row, lat_fn=lat_fn, lon_fn=lon_fn)
     curr_loc = get_loc_from_vms(prev_row, lat_fn=lat_fn, lon_fn=lon_fn)
     head = unit_vector(vector_between_two_points(prev_loc, curr_loc))
@@ -107,7 +111,7 @@ def get_head_from_vms(curr_row, prev_row, lat_fn: str=VMS_LAT_FIELD, lon_fn: str
     return head
 
 
-def get_SoG_from_vms(curr_row, prev_row, lat_fn: str=VMS_LAT_FIELD, lon_fn: str=VMS_LON_FIELD):
+def get_SoG_from_vms(curr_row, prev_row, lat_fn: str=LAT_FIELD_NAME, lon_fn: str=LON_FIELD_NAME):
     prev_loc = get_loc_from_vms(prev_row, lat_fn=lat_fn, lon_fn=lon_fn)
     curr_loc = get_loc_from_vms(curr_row, lat_fn=lat_fn, lon_fn=lon_fn)
     # Since the location of the vessel is measured in meters, all we have to do is divide the
@@ -136,7 +140,7 @@ def make_timestamp_from_vms_value(timestamp):
     return datetime(day=int(day), month=int(month), year=int(year), hour=int(hour), minute=int(minute), tzinfo=UTC)
 
 
-def get_timestamp_from_vms(curr_row, ts_fn='POSITION_DATETIME'):
+def get_timestamp_from_vms(curr_row, ts_fn=TIMESTAMP_FIELD_NAME):
     return make_timestamp_from_vms_value(curr_row[ts_fn])
 
 
