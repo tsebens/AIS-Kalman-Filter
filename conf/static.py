@@ -1,3 +1,4 @@
+from func import knts_to_mps, mps_to_knts
 '''
 Configuration file.
 
@@ -19,7 +20,7 @@ MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND = 0.001
 MAX_ALLOWABLE_TURN_PER_STATE = 25
 
 AVERAGE_VESSEL_SPEED = 3.85833 # 7.5 knots
-MAX_ALLOWABLE_VESSEL_SPEED = 7.71667 # We'll set it at 15 knots, which is this (according to google)
+MAX_ALLOWABLE_VESSEL_SPEED = knts_to_mps(15) # In knts
 
 # Max acceleration of the average fishing vessel
 AVERAGE_VESSEL_ACCELERATION = 0.02

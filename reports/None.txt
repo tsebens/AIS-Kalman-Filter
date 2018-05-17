@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "main.py", line 31, in <module>
+    data_package.set_filtered_states(ais_kalman(data_package.get_states(), filter_state))
+  File "F:\CIA_Python\PROD\PythonScripts\AIS-Kalman-Filter\bin\filter.py", line 17, in ais_kalman
+    prev_state = make_initial_filter_state(vessel_states.__next__())
+  File "F:\CIA_Python\PROD\PythonScripts\AIS-Kalman-Filter\bin\data_package.py", line 40, in get_states
+    init_row_1 = payload_gen.__next__()
+StopIteration

@@ -79,7 +79,8 @@ def make_init_state_from_vms(init_row_1, init_row_2):
 def make_row_from_vms_state(state: VesselState):
     row = state.row
     row['filt_lon'], row['filt_lat'] = convert_aa_to_loc(state.loc_state.est[0], state.loc_state.est[1])
-    row['flagged_by_filter'] = state.is_flagged
+    row['flagged_by_filter'] = 1 if state.is_flagged else 0
+    row['deviance'] = distance_between_two_points(state.loc_state.meas, state.loc_state.est)
     return row
 
 
@@ -136,7 +137,8 @@ def make_timestamp_from_vms_value(timestamp):
     date, time = timestamp.split(' ')
     year, month, day = date.split('-')
     hour, minute, second = time.split(':')
-    return datetime(day=int(day), month=int(month), year=int(year), hour=int(hour), minute=int(minute), tzinfo=UTC)
+    second = int(float(second))
+    return datetime(day=int(day), month=int(month), year=int(year), hour=int(hour), minute=int(minute), second=second, tzinfo=UTC)
 
 
 def get_timestamp_from_vms(curr_row, ts_fn='POSITION_DATETIME'):

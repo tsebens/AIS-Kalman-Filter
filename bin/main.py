@@ -22,19 +22,14 @@ db.test_connection()
 ids = db.get_unique_elements(vms_table, id_field)
 count = 0
 for id_val in ids:
-    print('Processing %s' % id)
-    in_tbl_vessel = TableVessel(db, INPUT_TABLE, id_field=ID_FIELD, id_value=id_val)
-    out_tbl_vessel = TableVessel(db, OUTPUT_TABLE, id_field=ID_FIELD, id_value=id_val)
-    data_package = VMSDataPackage(in_tbl_vessel, out_tbl_vessel)
-    data_package.load_payload()
-    data_package.set_filtered_states(ais_kalman(data_package.get_states(), filter_state))
-    rms = rmse_of_states(data_package.get_filtered_states())
-    name = 'RMSE - %s ID - %s' % (rms, id_val)
-    for state in data_package.get_filtered_states():
-        if state.is_flagged:
-            make_plot(data_package.get_filtered_states(), title='RMS: %s' % rms)
-            show_plot()
-            clear
-            break
-    #data_package.write_payload()
-
+    try:
+        print('Processing %s' % id)
+        in_tbl_vessel = TableVessel(db, INPUT_TABLE, id_field=ID_FIELD, id_value=id_val)
+        out_tbl_vessel = TableVessel(db, OUTPUT_TABLE, id_field=ID_FIELD, id_value=id_val)
+        data_package = VMSDataPackage(in_tbl_vessel, out_tbl_vessel)
+        data_package.load_payload()
+        data_package.set_filtered_states(ais_kalman(data_package.get_states(), filter_state))
+        data_package.write_payload()
+    except StopIteration:
+        print('Empty dataset')
+        continue

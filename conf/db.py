@@ -1,22 +1,24 @@
 from pypika import Table, Field
+
 """
 --------------------------------------------------------------------------------------------
 Database connection configuration
 --------------------------------------------------------------------------------------------
 """
-
-server = 'localhost'
-port = '6000'
-dbname = 'kalman'
-user = 'tristan.sebens'
+server = r'akr-j98\PROD'
+port = '1433'
+dbname = 'CATCH_IN_AREAS'
+user = ''
 pwd = ''
 
 # The table where the filter will look for inputs
-OUTPUT_TABLE = Table('VMS_TEST_VOYAGE_FILTERED', schema='public')
+INPUT_TABLE = Table('STG_VMS', schema='dbo')
 # The table where the filter will write it's outputs
-INPUT_TABLE = Table('VMS_TEST_VOYAGE', schema='public')
+OUTPUT_TABLE = Table('stg_vms_test', schema='dbo')
 # The field the filter will use to distinguish individual vessels
 ID_FIELD = Field("VESSEL_ID")
+
+
 
 
 # The DB table where column names are stored.

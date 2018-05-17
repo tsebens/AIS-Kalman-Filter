@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "main.py", line 42, in <module>
+    data_package.write_payload()
+  File "F:\CIA_Python\PROD\PythonScripts\AIS-Kalman-Filter\bin\data_package.py", line 29, in write_payload
+    self.out_tbl_conn.write_data(self.make_rows(self.filtered_states))
+  File "F:\CIA_Python\PROD\PythonScripts\AIS-Kalman-Filter\bin\connect.py", line 165, in write_data
+    cursor.execute(self.make_write_data_statement(data))
+  File "C:\Python36\lib\site-packages\pypyodbc.py", line 1626, in execute
+    self.execdirect(query_string)
+  File "C:\Python36\lib\site-packages\pypyodbc.py", line 1652, in execdirect
+    check_success(self, ret)
+  File "C:\Python36\lib\site-packages\pypyodbc.py", line 1007, in check_success
+    ctrl_err(SQL_HANDLE_STMT, ODBC_obj.stmt_h, ret, ODBC_obj.ansi)
+  File "C:\Python36\lib\site-packages\pypyodbc.py", line 977, in ctrl_err
+    raise DataError(state,err_text)
+pypyodbc.DataError: ('22003', '[22003] [Microsoft][ODBC SQL Server Driver][SQL Server]Arithmetic overflow error converting float to data type numeric.')
