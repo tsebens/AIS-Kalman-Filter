@@ -1,7 +1,9 @@
 # Kalman filter
-from convert import make_initial_filter_state
+from calculate import distance_between_two_points
+from convert import make_initial_filter_state, seconds_passed_between_states
 from state import FilterState, VesselState
 from conf.static import MAX_ALLOWABLE_VESSEL_SPEED
+
 
 """
 Executes a Kalman filter on the passed ais_data and returns a list of estimates for location(lat/lon), heading, and SoG for every point in ais_data after the first.
@@ -10,8 +12,9 @@ The first point is considered to be completely accurate. Gotta start somewhere.
 The filter_state is a value object which contains a lot of information about the way in which the filter should behave
 Refer to the FilterState object documentation for a more complete description.
 """
+
+
 def ais_kalman(vessel_states, filter_state: FilterState):
-    
     # Populate our initial values
     prev_state = make_initial_filter_state(vessel_states.__next__())
     filtered_states = [prev_state,]
