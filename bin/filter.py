@@ -2,6 +2,7 @@
 from convert import make_initial_filter_state
 from state import FilterState, VesselState
 from conf.static import MAX_ALLOWABLE_VESSEL_SPEED
+from calculate import distance_between_two_points
 
 """
 Executes a Kalman filter on the passed ais_data and returns a list of estimates for location(lat/lon), heading, and SoG for every point in ais_data after the first.
