@@ -128,16 +128,22 @@ class SQLServerDataBase(DataBase):
         else:
             table = table.table_name
         return template + table
-        
+
+    def sanitize_value(self, val):
+        # This loop will see every value pair in the dataset
+        if val == 'false':
+            return 0
+        if val == 'true':
+            return 1
+
+    def sanitize_row(self, row: OrderedDict):
+        for key in row:
+            row[key] = self.sanitize_value(row[key])
+        return row
+
     def sanitize_data(self, data):
         for index in range(len(data)):
-            for key in data[index]:
-                # This loop will see every key/value pair in the dataset
-                val = data[index][key]
-                if val == 'false':
-                    data[index][key] = 0
-                if val == 'true':
-                    data[index][key] = 1
+            data[index] = self.sanitize_row(data[index])
         return data
                     
     def make_write_data_statement(self, data, table):
