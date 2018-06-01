@@ -128,6 +128,50 @@ class SQLServerDataBase(DataBase):
         else:
             table = table.table_name
         return template + table
+        
+    def sanitize_data(self, data):
+        for index in range(len(data)):
+            for key in data[index]:
+                # This loop will see every key/value pair in the dataset
+                val = data[index][key]
+                if val == 'false':
+                    data[index][key] = 0
+                if val == 'true':
+                    data[index][key] = 1
+        return data
+                    
+    def make_write_data_statement(self, data, table):
+        data = self.sanitize_data(data)
+        print('Making a write query for %s rows' % len(data))
+        fields = self.get_table_column_names(table)
+        full_q = ""
+        i = 0
+        # SQLServer only allos 1000 records to be inserted at once, so we have to slice the data into 1000 element chunks
+        while i + 999 < len(data):
+            print('Making sub query. i = %s' % i)
+            sub_data = data[i:i + 1000] # The end index is not included
+            assert(len(sub_data) == 1000)
+            sub_q = str(
+                self.get_query_base()
+                .into(table)
+                .columns(*fields)
+                .insert(*[[row[field] for field in fields] for row in sub_data]))
+            sub_q += ';'
+            full_q += sub_q
+            i += 1000
+        # Add the last elements of the data into the statement
+        sub_data = data[i:]
+        sub_q = str(
+            self.get_query_base()
+            .into(table)
+            .columns(*fields)
+            .insert(*[[row[field] for field in fields] for row in sub_data]))
+        sub_q += ';'
+        full_q += sub_q
+        with open(r'F:\CIA_Python\PROD\PythonScripts\AIS-Kalman-Filter\statement.txt', 'w') as file:
+            file.write(full_q)
+        print('Write query complete.')
+        return full_q
 
 
 
@@ -160,6 +204,8 @@ class TableVessel:
     def write_data(self, data: List[OrderedDict]):
         conn = self.db.get_connection()
         cursor = conn.cursor()
+        with open(r'F:\CIA_Python\PROD\PythonScripts\AIS-Kalman-Filter\statement.txt', 'w') as log:
+            log.write(self.make_write_data_statement(data))
         cursor.execute(self.make_write_data_statement(data))
         cursor.commit()
         conn.close()
@@ -178,12 +224,7 @@ class TableVessel:
 
 
     def make_write_data_statement(self, data):
-        fields = self.db.get_table_column_names(self.table)
-        return str(
-            self.db.get_query_base()
-            .into(self.table)
-            .columns(*fields)
-            .insert(*[[row[field] for field in fields] for row in data]))
+        return self.db.make_write_data_statement(data, self.table)
         
     def make_truncate_statement(self):
         template = 'TRUNCATE {schema}{table}'

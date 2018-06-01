@@ -82,6 +82,7 @@ def make_row_from_vms_state(state: VesselState):
         state.loc_state.meas,
         state.loc_state.est
     )
+    row['flagged_by_filter'] = 1 if state.is_flagged else 0
     return row
 
 

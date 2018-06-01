@@ -31,8 +31,11 @@ for id_val in ids:
         in_tbl_vessel = TableVessel(db, INPUT_TABLE, id_field=ID_FIELD, id_value=id_val)
         out_tbl_vessel = TableVessel(db, OUTPUT_TABLE, id_field=ID_FIELD, id_value=id_val)
         data_package = VMSDataPackage(in_tbl_vessel, out_tbl_vessel)
+        print('Loading payload...')
         data_package.load_payload()
+        print("Filtering data...")
         data_package.set_filtered_states(ais_kalman(data_package.get_states(), filter_state))
+        print('Writing payload...')
         data_package.write_payload()
     except StopIteration:
         print('Empty dataset')
