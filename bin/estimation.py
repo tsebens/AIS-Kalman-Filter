@@ -4,6 +4,7 @@ from conf.static import MAX_ALLOWABLE_HEADING_CHANGE_DEGREES_PER_SECOND, \
 from convert import make_est_from_meas_pred_and_fact, seconds_passed_between_states
 from state import VesselState, FilterState
 from conf.static import DEFAULT_GRACE_FACTOR
+from numpy import add, multiply
 
 '''
 The estimation step is where we combine what we predicted about the state of the vessel with what we measured, and do so 
@@ -163,7 +164,7 @@ def est_loc_ignore_heading_max_distance(filter_state: FilterState, curr_state: V
                 prev_state.loc_state.est
             )
         )
-        est_location = prev_state.loc_state.est + dir_to_est * max_allowable_distance
+        est_location = add(prev_state.loc_state.est, multiply(dir_to_est, max_allowable_distance))
     return est_location
 
 

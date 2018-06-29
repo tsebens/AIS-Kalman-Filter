@@ -19,13 +19,12 @@ from pypika import Table, Field
 from vms import VMSDataPackage, CSV_VMSDataPackage
 from filter import ais_kalman
 
-vms_table = Table('STG_VMS', schema='dbo')
-id_field = Field('VESSEL_ID')
 db = SQLServerDataBase(server, port, dbname, '', '', trusted_source=True)
 db.test_connection()
-ids = db.get_unique_elements(vms_table, id_field)
+ids = db.get_unique_elements(INPUT_TABLE, ID_FIELD)
 count = 0
 for id_val in ids:
+    id_val = 4
     try:
         print('Processing %s' % id)
         in_tbl_vessel = TableVessel(db, INPUT_TABLE, id_field=ID_FIELD, id_value=id_val)
@@ -40,3 +39,4 @@ for id_val in ids:
     except StopIteration:
         print('Empty dataset')
         continue
+    sys.exit()

@@ -28,6 +28,7 @@ def rotate_vector(v1, deg):
 
 # Returns the vector pointing from p1 to p2
 def vector_between_two_points(p1, p2):
+    
     res = np.subtract(p1, p2)
     return res
 
@@ -38,6 +39,8 @@ def vector_length(v1):
 
 
 def distance_between_two_points(p1, p2):
+    if np.all(np.isclose(p1, p2)):
+        return 0
     return vector_length(vector_between_two_points(p1,p2))
     
     

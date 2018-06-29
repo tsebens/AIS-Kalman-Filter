@@ -131,10 +131,11 @@ class SQLServerDataBase(DataBase):
 
     def sanitize_value(self, val):
         # This loop will see every value pair in the dataset
-        if val == 'false':
+        if type(val) is bool and val == False:
             return 0
-        if val == 'true':
+        if type(val) is bool and val == True:
             return 1
+        return val
 
     def sanitize_row(self, row: OrderedDict):
         for key in row:
