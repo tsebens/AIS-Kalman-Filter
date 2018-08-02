@@ -1,5 +1,4 @@
 from csv import DictReader
-
 import numpy as np
 from datetime import datetime
 from calculate import unit_vector, vector_between_two_points, distance_between_two_points
@@ -102,6 +101,7 @@ def get_loc_from_vms(row, lat_fn: str=LAT_FIELD_NAME, lon_fn: str=LON_FIELD_NAME
 
 
 def get_head_from_vms(curr_row, prev_row, lat_fn: str=LAT_FIELD_NAME, lon_fn: str=LON_FIELD_NAME):
+    """Calculate the heading between two locations"""
     prev_loc = get_loc_from_vms(curr_row, lat_fn=lat_fn, lon_fn=lon_fn)
     curr_loc = get_loc_from_vms(prev_row, lat_fn=lat_fn, lon_fn=lon_fn)
     head = unit_vector(vector_between_two_points(prev_loc, curr_loc))
