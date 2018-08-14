@@ -5,39 +5,38 @@ from pypika import Table, Field
 DATABASE CONFIGURATION
 ----------------------------------------------------------------
 """
-server = r'akr-j98\PROD'
+server = r'akr-j53\PROD'
 port = '1433'
 dbname = 'CATCH_IN_AREAS'
 user = ''
 pwd = ''
 
-# The table where the filter will look for inputs
-INPUT_TABLE = Table('VMS', schema='dbo')
-# The table where the filter will write it's outputs
-OUTPUT_TABLE = Table('VMS_Filter', schema='dbo')
-# The field the filter will use to distinguish individual vessels
-ID_FIELD = Field("VESSEL_ID")
-
-
 """
 ----------------------------------------------------------------
-INPUT FIELDS
+INPUT
 ----------------------------------------------------------------
 """
+INPUT_TABLE = Table("STG_VMS", schema='dbo')
 # The field the filter will use to distinguish individual vessels
 ID_FIELD_NAME = "VESSEL_ID"
+ID_FIELD = Field(ID_FIELD_NAME)
 # Fieldname for the longitude values
 LON_FIELD_NAME = "LONGITUDE"
+LON_FIELD = Field(LON_FIELD_NAME)
 # Fieldname for the latitude values
 LAT_FIELD_NAME = "LATITUDE"
+LAT_FIELD = Field(LAT_FIELD_NAME)
 # Fieldname for the timestamp values
 TIMESTAMP_FIELD_NAME = "POSITION_DATETIME"
+TIMESTAMP_FIELD = Field(TIMESTAMP_FIELD_NAME)
+
 
 """
 ----------------------------------------------------------------
-OUTPUT FIELDS
+OUTPUT
 ----------------------------------------------------------------
 """
+OUTPUT_TABLE = Table("stg_vms_test", schema='dbo')
 # Fieldname for the output longitude values
 OUTPUT_LON_FIELD_NAME = "filt_lon"
 # Fieldname for the output latitude values

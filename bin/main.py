@@ -8,11 +8,12 @@ from calculate import rmse_of_states
 cwd = getcwd()
 sys.path.append(join(cwd, '..'))
 static_wd = r'F:\CIA_Python\PROD\PythonScripts\AIS-Kalman-Filter'
-sys.path.append(static_wd) # We do this because SQL Server calls this script from a different working directory
-sys.path.append(join(static_wd, 'bin'))
-sys.path.append(join(static_wd, 'conf'))
+cwd = static_wd
+sys.path.append(cwd) # We do this because SQL Server calls this script from a different working directory
+sys.path.append(join(cwd, 'bin'))
+sys.path.append(join(cwd, 'conf'))
 from plot import make_iterative_plot, make_plot
-from conf.db import server, port, dbname, user, pwd, ID_FIELD, OUTPUT_TABLE, INPUT_TABLE
+from conf.db import server, port, dbname, user, pwd, ID_FIELD, OUTPUT_TABLE, INPUT_TABLE, TIMESTAMP_FIELD
 from conf.filter import filter_state
 from connect import TableVessel, SQLServerDataBase, PostgreSQLDataBase
 from pypika import Table, Field
@@ -24,11 +25,10 @@ db.test_connection()
 ids = db.get_unique_elements(INPUT_TABLE, ID_FIELD)
 count = 0
 for id_val in ids:
-    id_val = 4
     try:
         print('Processing %s' % id)
-        in_tbl_vessel = TableVessel(db, INPUT_TABLE, id_field=ID_FIELD, id_value=id_val)
-        out_tbl_vessel = TableVessel(db, OUTPUT_TABLE, id_field=ID_FIELD, id_value=id_val)
+        in_tbl_vessel = TableVessel(db, INPUT_TABLE, id_field=ID_FIELD, id_value=id_val, order_field=TIMESTAMP_FIELD)
+        out_tbl_vessel = TableVessel(db, OUTPUT_TABLE, id_field=ID_FIELD, id_value=id_val, order_field=TIMESTAMP_FIELD)
         data_package = VMSDataPackage(in_tbl_vessel, out_tbl_vessel)
         print('Loading payload...')
         data_package.load_payload()
@@ -39,4 +39,3 @@ for id_val in ids:
     except StopIteration:
         print('Empty dataset')
         continue
-    sys.exit()

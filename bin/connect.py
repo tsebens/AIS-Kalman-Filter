@@ -153,10 +153,11 @@ class SQLServerDataBase(DataBase):
         fields = self.get_table_column_names(table)
         full_q = ""
         i = 0
-        # SQLServer only allos 1000 records to be inserted at once, so we have to slice the data into 1000 element chunks
+        ''' SQLServer only allows 1000 records to be inserted at once, so we have to slice the data 
+        into 1000 element chunks '''
         while i + 999 < len(data):
             print('Making sub query. i = %s' % i)
-            sub_data = data[i:i + 1000] # The end index is not included
+            sub_data = data[i:i + 1000]  # The end index is not included
             assert(len(sub_data) == 1000)
             sub_q = str(
                 self.get_query_base()
@@ -191,9 +192,10 @@ TableVessel Object
 
 class TableVessel:
     """Provides an interface to all values in a database table that correspond to a particular vessel."""
-    def __init__(self, db: DataBase, table: Table, id_field: Field=None, id_value: int=None):
+    def __init__(self, db: DataBase, table: Table, id_field: Field=None, id_value: int=None, order_field: Field=None):
         self.id_field = id_field
         self.id_value = id_value
+        self.order_field = order_field
         self.table = table
         self.db = db
 
@@ -227,7 +229,8 @@ class TableVessel:
         return str(
             self.db.get_query_base()
             .from_(self.table).select('*')
-            .where(self.id_field == self.id_value))
+            .where(self.id_field == self.id_value)
+            .orderby(self.order_field))
 
 
     def make_write_data_statement(self, data):
