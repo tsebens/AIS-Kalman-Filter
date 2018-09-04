@@ -12,11 +12,12 @@ from calculate import rmse_of_states
 cwd = getcwd()
 sys.path.append(join(cwd, '..'))
 static_wd = r'F:\CIA_Python\PROD\PythonScripts\AIS-Kalman-Filter'
-sys.path.append(static_wd) # We do this because SQL Server calls this script from a different working directory
-sys.path.append(join(static_wd, 'bin'))
-sys.path.append(join(static_wd, 'conf'))
+cwd = static_wd
+sys.path.append(cwd) # We do this because SQL Server calls this script from a different working directory
+sys.path.append(join(cwd, 'bin'))
+sys.path.append(join(cwd, 'conf'))
 from plot import make_iterative_plot, make_plot
-from conf.db import server, port, dbname, user, pwd, ID_FIELD, OUTPUT_TABLE, INPUT_TABLE
+from conf.db import server, port, dbname, user, pwd, ID_FIELD, OUTPUT_TABLE, INPUT_TABLE, TIMESTAMP_FIELD
 from conf.filter import filter_state
 from connect import TableVessel, SQLServerDataBase, PostgreSQLDataBase
 from pypika import Table, Field

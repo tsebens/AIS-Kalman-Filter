@@ -4,7 +4,7 @@ from datetime import datetime
 from calculate import unit_vector, vector_between_two_points, distance_between_two_points
 from convert import seconds_passed_between_datetimes
 from data_package import DataPackageBase
-from db import LON_FIELD_NAME, LAT_FIELD_NAME, TIMESTAMP_FIELD_NAME, OUTPUT_LAT_FIELD_NAME, OUTPUT_LON_FIELD_NAME, \
+from conf.db import LON_FIELD_NAME, LAT_FIELD_NAME, TIMESTAMP_FIELD_NAME, OUTPUT_LAT_FIELD_NAME, OUTPUT_LON_FIELD_NAME, \
     OUTPUT_DEV_FIELD_NAME
 from project import convert_aa_to_loc, convert_loc_to_aa
 from state import VesselState, VarState
@@ -76,12 +76,14 @@ def make_init_state_from_vms(init_row_1, init_row_2):
 
 def make_row_from_vms_state(state: VesselState):
     row = state.row
-    row[OUTPUT_LON_FIELD_NAME], row[OUTPUT_LAT_FIELD_NAME] = convert_aa_to_loc(state.loc_state.est[0], state.loc_state.est[1])
-    row[OUTPUT_DEV_FIELD_NAME] = distance_between_two_points(
+    dev = distance_between_two_points(
         state.loc_state.meas,
         state.loc_state.est
     )
+    row[OUTPUT_DEV_FIELD_NAME] = dev if not np.isnan(dev) else 0
+    row[OUTPUT_LON_FIELD_NAME], row[OUTPUT_LAT_FIELD_NAME] = convert_aa_to_loc(state.loc_state.est[0], state.loc_state.est[1])
     row['flagged_by_filter'] = 1 if state.is_flagged else 0
+    #row.pop('VMS_RECORD_ID')
     return row
 
 
@@ -101,7 +103,6 @@ def get_loc_from_vms(row, lat_fn: str=LAT_FIELD_NAME, lon_fn: str=LON_FIELD_NAME
 
 
 def get_head_from_vms(curr_row, prev_row, lat_fn: str=LAT_FIELD_NAME, lon_fn: str=LON_FIELD_NAME):
-    """Calculate the heading between two locations"""
     prev_loc = get_loc_from_vms(curr_row, lat_fn=lat_fn, lon_fn=lon_fn)
     curr_loc = get_loc_from_vms(prev_row, lat_fn=lat_fn, lon_fn=lon_fn)
     head = unit_vector(vector_between_two_points(prev_loc, curr_loc))
@@ -121,13 +122,16 @@ def get_SoG_from_vms(curr_row, prev_row, lat_fn: str=LAT_FIELD_NAME, lon_fn: str
     ts2 = get_timestamp_from_vms(prev_row)
     time = seconds_passed_between_datetimes(ts1, ts2)
     distance = distance_between_two_points(prev_loc, curr_loc)
-    speed = distance/time
-    if np.isnan(speed):
-        # If the values are small enough, our division will yield a NaN value, or an inf value. In that case we can
-        # simply assign the value to zero
+    if time == 0:
         speed = 0
-    if np.isinf(speed):
-        speed = MAX_ALLOWABLE_VESSEL_SPEED
+    else:
+        speed = distance / time
+        if np.isnan(speed):
+            # If the values are small enough, our division will yield a NaN value, or an inf value. In that case we can
+            # simply assign the value to zero
+            speed = 0
+        if np.isinf(speed):
+            speed = MAX_ALLOWABLE_VESSEL_SPEED
     return speed
 
 
