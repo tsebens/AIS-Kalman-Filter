@@ -19,7 +19,7 @@ class DataPackageBase:
         # The generator should in turn reference a buffered generator from within the TableConnection
         if self.in_tbl_conn is None:
             raise NoTableConnectionSpecified('Attempted to load data into DataPackage, but no TableConnection has been specified.')
-        self.payload = self.in_tbl_conn.get_data()
+        self.payload = [row for row in self.in_tbl_conn.get_data()]
 
     def write_payload(self):
         if self.out_tbl_conn is None:

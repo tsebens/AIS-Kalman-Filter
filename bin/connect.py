@@ -1,12 +1,8 @@
 import sys
-from collections import OrderedDict, Set
-from typing import List
-from pypika import Query, MSSQLQuery, PostgreSQLQuery, Table, Field
-from pypyodbc import connect, Connection, DatabaseError
+from pypika import MSSQLQuery, PostgreSQLQuery, Table, Field
 from collections import OrderedDict
 from typing import List
 from pypyodbc import connect, DatabaseError
-from conf.db import DB_COLUMNS_TABLE, DB_COLUMN_COLUMN_NAME, DB_COLUMN_TABLE_NAME_FIELD
 from convert import row_to_dict
 from exceptions import UseOfAbstractForm
 
@@ -76,10 +72,12 @@ class DataBase:
     # TODO: The constant values in this function (DB_COLUMNS_TABLE, DB_COLUMN_COLUMN_NAME, etc) should probably be made attributes of the DataBase object.
     def get_table_column_names(self, table: Table):
         conn = self.get_connection()
-        q = str(self.get_query_base()\
-            .from_(self.db_columns_table)\
-            .select(self.db_column_column_name)\
-            .where(self.db_column_table_name_field == table.table_name))
+        q = str(
+            self.get_query_base()
+                .from_(self.db_columns_table)
+                .select(self.db_column_column_name)
+                .where(self.db_column_table_name_field == table._table_name)
+        )
         return [result[0] for result in conn.cursor().execute(q)]
 
     def test_connection(self):
@@ -90,6 +88,7 @@ class DataBase:
             conn.close()
         except DatabaseError as dbe:
             print('There is a problem with the connection:\n%s' % dbe.__str__())
+            sys.exit()
 
 
 class PostgreSQLDataBase(DataBase):
@@ -109,6 +108,16 @@ class PostgreSQLDataBase(DataBase):
         else:
             table = table.table_name
         return template + table
+
+    def make_write_data_statement(self, data, table):
+        fields = self.get_table_column_names(table)
+        return str(
+            self.get_query_base()
+                .into(table)
+                .columns(*fields)
+                .insert(*[[row[field] for field in fields] for row in data])
+        )
+
 
 
 class SQLServerDataBase(DataBase):
@@ -130,7 +139,7 @@ class SQLServerDataBase(DataBase):
         return template + table
 
     def sanitize_value(self, val):
-        # This loop will see every value pair in the dataset
+        # This function will see every value in the dataset
         if type(val) is bool and val == False:
             return 0
         if type(val) is bool and val == True:
@@ -146,7 +155,7 @@ class SQLServerDataBase(DataBase):
         for index in range(len(data)):
             data[index] = self.sanitize_row(data[index])
         return data
-                    
+
     def make_write_data_statement(self, data, table):
         data = self.sanitize_data(data)
         print('Making a write query for %s rows' % len(data))
@@ -176,8 +185,6 @@ class SQLServerDataBase(DataBase):
             .insert(*[[row[field] for field in fields] for row in sub_data]))
         sub_q += ';'
         full_q += sub_q
-        with open(r'F:\CIA_Python\PROD\PythonScripts\AIS-Kalman-Filter\statement.txt', 'w') as file:
-            file.write(full_q)
         print('Write query complete.')
         return full_q
 
@@ -188,8 +195,6 @@ class SQLServerDataBase(DataBase):
 TableVessel Object
 ------------------------------------------------------------------------------------------------------------------------
 """
-
-
 class TableVessel:
     """Provides an interface to all values in a database table that correspond to a particular vessel."""
     def __init__(self, db: DataBase, table: Table, id_field: Field=None, id_value: int=None, order_field: Field=None):
@@ -202,19 +207,15 @@ class TableVessel:
     # Fills the data package with the relevant data from the database
     def get_data(self):
         conn = self.db.get_connection()
-        cursor = conn.cursor()
-        stmt = self.make_get_data_statement()
-        print(stmt)
-        cursor = cursor.execute(stmt)
         fields = self.db.get_table_column_names(self.table)
+        cursor = conn.cursor()
+        cursor = cursor.execute(self.make_get_data_statement())
         for row in cursor:
             yield row_to_dict(fields, row)
 
     def write_data(self, data: List[OrderedDict]):
         conn = self.db.get_connection()
         cursor = conn.cursor()
-        with open(r'F:\CIA_Python\PROD\PythonScripts\AIS-Kalman-Filter\statement.txt', 'w') as log:
-            log.write(self.make_write_data_statement(data))
         cursor.execute(self.make_write_data_statement(data))
         cursor.commit()
         conn.close()
@@ -230,12 +231,13 @@ class TableVessel:
             self.db.get_query_base()
             .from_(self.table).select('*')
             .where(self.id_field == self.id_value)
-            .orderby(self.order_field))
+            .orderby(self.order_field)
+        )
 
 
     def make_write_data_statement(self, data):
         return self.db.make_write_data_statement(data, self.table)
-        
+
     def make_truncate_statement(self):
         template = 'TRUNCATE {schema}{table}'
         return template.format(schema=self.table.schema, table=self.table.table_name)
