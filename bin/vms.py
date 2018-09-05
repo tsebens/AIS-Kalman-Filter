@@ -137,13 +137,21 @@ def get_SoG_from_vms(curr_row, prev_row, lat_fn: str=LAT_FIELD_NAME, lon_fn: str
 
 def make_timestamp_from_vms_value(timestamp):
     '''VMS format: 2018-04-16 00:00:00.0000000'''
+    # TODO: This function is a huge problem. There are too many potential formats.
     if type(timestamp) == datetime:
         # If the data has been read from a database, there is a chance that it will already be in datetime format
         return timestamp
     date, time = timestamp.split(' ')
-    year, month, day = date.split('-')
-    hour, minute, second = time.split(':')
-    second = int(float(second))
+    try:
+        year, month, day = date.split('-')
+    except ValueError:
+        day, month, year = date.split('/')
+    try:
+        hour, minute, second = time.split(':')
+        second = int(float(second))
+    except ValueError:
+        hour, minute = time.split(':')
+        second = 0
     return datetime(day=int(day), month=int(month), year=int(year), hour=int(hour), minute=int(minute), second=second, tzinfo=UTC)
 
 
