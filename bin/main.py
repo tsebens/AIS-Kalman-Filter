@@ -16,32 +16,32 @@ cwd = static_wd
 sys.path.append(cwd) # We do this because SQL Server calls this script from a different working directory
 sys.path.append(join(cwd, 'bin'))
 sys.path.append(join(cwd, 'conf'))
-from plot import make_iterative_plot, make_plot
-from conf.db import server, port, dbname, user, pwd, ID_FIELD, OUTPUT_TABLE, INPUT_TABLE, TIMESTAMP_FIELD
+from conf.db import ID_FIELD, OUTPUT_TABLE, INPUT_TABLE, TIMESTAMP_FIELD, db
 from conf.filter import filter_state
-from connect import TableVessel, SQLServerDataBase, PostgreSQLDataBase
-from pypika import Table, Field
+from connect import TableVessel
 from vms import VMSDataPackage, CSV_VMSDataPackage
 from filter import ais_kalman
 
 def main():
-    vms_table = Table('STG_VMS', schema='dbo')
-    id_field = Field('VESSEL_ID')
-    db = SQLServerDataBase(server, port, dbname, '', '', trusted_source=True)
     db.test_connection()
-    ids = db.get_unique_elements(vms_table, id_field)
-    count = 0
+    # Compile a list of all unique entities in the table to test, then iterate through them
+    ids = db.get_unique_elements(INPUT_TABLE, ID_FIELD)
     for id_val in ids:
         try:
             print('Processing %s' % id)
-            in_tbl_vessel = TableVessel(db, INPUT_TABLE, id_field=ID_FIELD, id_value=id_val)
-            out_tbl_vessel = TableVessel(db, OUTPUT_TABLE, id_field=ID_FIELD, id_value=id_val)
-            data_package = VMSDataPackage(in_tbl_vessel, out_tbl_vessel)
+            # Define the input and output points for the data
+            data_package = VMSDataPackage(
+                TableVessel(db, INPUT_TABLE, id_field=ID_FIELD, id_value=id_val, order_field=TIMESTAMP_FIELD),
+                TableVessel(db, OUTPUT_TABLE, id_field=ID_FIELD, id_value=id_val, order_field=TIMESTAMP_FIELD)
+            )
             print('Loading payload...')
+            # Load the data into memory
             data_package.load_payload()
             print("Filtering data...")
+            # Filter the data
             data_package.set_filtered_states(ais_kalman(data_package.get_states(), filter_state))
             print('Writing payload...')
+            # Write the filtered data back.
             data_package.write_payload()
         except StopIteration:
             print('Empty dataset')
@@ -74,4 +74,4 @@ def test_bad_data():
     filter_vms_csv(fp)
 
 if __name__ == '__main__':
-    test_bad_data()
+    main()
