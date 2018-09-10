@@ -13,47 +13,39 @@ class DataPackageBase:
         self.in_tbl_conn = in_tbl_vessel
         self.out_tbl_conn = out_tbl_vessel
 
-    # Loads the DataPackage with all of the data from the DB table
     def load_payload(self):
+        """Loads the DataPackage with all of the data from the DB table"""
         # TODO: In the future, this should set the payload as a generator supplied by the TableConnection
         # The generator should in turn reference a buffered generator from within the TableConnection
         if self.in_tbl_conn is None:
             raise NoTableConnectionSpecified('Attempted to load data into DataPackage, but no TableConnection has been specified.')
-        self.payload = [row for row in self.in_tbl_conn.get_data()]
+        self.payload = self.in_tbl_conn.get_data()
 
     def write_payload(self):
+        """Write the filtered states"""
         if self.out_tbl_conn is None:
             raise NoTableConnectionSpecified('Attempted to write DataPackage payload to DB, but no TableConnection has been specified.')
         if self.filtered_states is None:
             raise AttemptToWriteUnprocessedData('Attempted to write to the DB, but the data hasn\'t been processed yet.')
-        self.out_tbl_conn.write_data(self.make_rows(self.filtered_states))
+        self.out_tbl_conn.write_data(self.make_rows(self.payload))
 
-    # Returns the values of the payload as a generator of OrderedDicts
     def get_payload(self):
-        # TODO: In the future, self.payload will reference a generator supplied by the TableConnection.
-        # This loop will still work
-        for row in self.payload:
-            yield row
+        """Return the payload as a list of OrderedDicts"""
+        return self.payload
+
+    def set_payload(self, data):
+        self.payload = data
 
     def get_states(self):
-        payload_gen = self.get_payload()
-        init_row_1 = payload_gen.__next__()
-        init_row_2 = payload_gen.__next__()
+        init_row_1 = self.payload[0]
+        init_row_2 = self.payload[1]
         vs1, vs2 = self.make_init_states(init_row_1, init_row_2)
-        yield vs1
-        yield vs2
+        states = [vs1, vs2]
         prev_row = init_row_2
-        for curr_row in payload_gen:
-            yield self.make_state(curr_row, prev_row)
+        for curr_row in self.payload[2:]:
+            states.append(self.make_state(curr_row, prev_row))
             prev_row = curr_row
-
-    def set_filtered_states(self, states):
-        self.filtered_states = states
-
-    def get_filtered_states(self):
-        if self.filtered_states is None:
-            raise AttemptToReadUnprocessedData('Attempted to read filtered data before it has been filtered.')
-        return self.filtered_states
+        return states
 
     def make_state(self, curr_row, prev_row):
         raise UseOfAbstractForm('Attempted to use abstract version of make_state. Must use a child class')
