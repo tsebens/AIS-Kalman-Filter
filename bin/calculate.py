@@ -1,6 +1,8 @@
 from math import fabs
 import numpy as np
 
+from state import VesselState
+
 
 def unit_vector(vector):
     """ Returns the unit vector of the vector.  """
@@ -28,7 +30,6 @@ def rotate_vector(v1, deg):
 
 # Returns the vector pointing from p1 to p2
 def vector_between_two_points(p1, p2):
-    
     res = np.subtract(p1, p2)
     return res
 
@@ -36,6 +37,11 @@ def vector_between_two_points(p1, p2):
 # Return the length of a vector
 def vector_length(v1):
     return np.linalg.norm(v1)
+
+
+def distance_between_two_states(s1: VesselState, s2: VesselState):
+    """Return the distance between the observed locations between two states"""
+    return distance_between_two_points(s1.loc_state.meas, s2.loc_state.meas)
 
 
 def distance_between_two_points(p1, p2):

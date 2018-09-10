@@ -1,5 +1,7 @@
 # Kalman filter
-from calculate import distance_between_two_points
+from typing import List
+
+from calculate import distance_between_two_points, distance_between_two_states
 from convert import make_initial_filter_state, seconds_passed_between_states
 from state import FilterState, VesselState
 from conf.static import MAX_ALLOWABLE_VESSEL_SPEED
@@ -66,3 +68,17 @@ def flag_state(curr_state, prev_state):
     return curr_state
 
 
+def pre_process_data(data: List, factor=2):
+    sum_distance = 0
+    prev_state: VesselState = data[0]
+    for curr_state in data[1:]:
+        curr_state: VesselState
+        sum_distance += abs(distance_between_two_states(prev_state, curr_state))
+        prev_state = curr_state
+    avg_distance = sum_distance / len(data)
+    prev_state: VesselState = data[0]
+    for index in range(1, len(data)):
+        curr_state = data[index]
+        if distance_between_two_states(prev_state, curr_state) < factor * avg_distance:
+            return data[index-1:]
+        prev_state = curr_state
