@@ -83,6 +83,7 @@ def make_row_from_vms_state(state: VesselState):
     row[OUTPUT_DEV_FIELD_NAME] = dev if not np.isnan(dev) else 0
     row[OUTPUT_LON_FIELD_NAME], row[OUTPUT_LAT_FIELD_NAME] = convert_aa_to_loc(state.loc_state.est[0], state.loc_state.est[1])
     row['flagged_by_filter'] = 1 if state.is_flagged else 0
+    row['heading'] = state.head_state.est
     #row.pop('VMS_RECORD_ID')
     return row
 
