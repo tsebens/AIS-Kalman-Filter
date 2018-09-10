@@ -210,8 +210,8 @@ class TableVessel:
         fields = self.db.get_table_column_names(self.table)
         cursor = conn.cursor()
         cursor = cursor.execute(self.make_get_data_statement())
-        for row in cursor:
-            yield row_to_dict(fields, row)
+        # If memory is set to true, then the values will be loaded into memory as a list, not a generator
+        return list([row_to_dict(fields, row) for row in cursor])
 
     def write_data(self, data: List[OrderedDict]):
         conn = self.db.get_connection()
