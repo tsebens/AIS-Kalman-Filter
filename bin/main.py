@@ -20,7 +20,8 @@ from conf.db import ID_FIELD, OUTPUT_TABLE, INPUT_TABLE, TIMESTAMP_FIELD, db
 from conf.filter import filter_state
 from connect import TableVessel
 from vms import VMSDataPackage, CSV_VMSDataPackage
-from filter import ais_kalman
+from filter import ais_kalman, pre_process_data
+
 
 def main():
     db.test_connection()
@@ -37,9 +38,12 @@ def main():
             print('Loading payload...')
             # Load the data into memory
             data_package.load_payload()
+            print('Preprocessing data...')
+            # Preprocess the data to attempt to remove
+            data_package.set_payload(pre_process_data(data_package.get_states()))
             print("Filtering data...")
             # Filter the data
-            data_package.set_filtered_states(ais_kalman(data_package.get_states(), filter_state))
+            data_package.set_payload(ais_kalman(data_package.get_states(), filter_state))
             print('Writing payload...')
             # Write the filtered data back.
             data_package.write_payload()
@@ -53,7 +57,7 @@ def filter_vms_csv(csv):
     dp = CSV_VMSDataPackage(csv)
     dp = filter_dp(dp)
     with open(r'C:\Users\tristan.sebens\Projects\AIS-Kalman-Filter\ais_data\bad_data_out.csv', 'w', newline='') as out:
-        filtered_states = dp.make_rows(dp.get_filtered_states())
+        filtered_states = dp.make_rows(dp.get_payload())
         init = filtered_states[0]
         writer = DictWriter(out, fieldnames=init.keys())
         writer.writeheader()
@@ -65,7 +69,7 @@ def filter_vms_csv(csv):
 def filter_dp(dp: DataPackageBase):
     """Run the contents of a DataPackage through the filter"""
     dp.load_payload()
-    dp.set_filtered_states(ais_kalman(dp.get_states(), filter_state))
+    dp.set_payload(ais_kalman(dp.get_states(), filter_state))
     return dp
 
 
