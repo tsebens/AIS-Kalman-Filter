@@ -3,6 +3,7 @@ import numpy as np
 
 from state import VesselState
 
+"""Assorted calculation functions needed around the application."""
 
 def unit_vector(vector):
     """ Returns the unit vector of the vector.  """

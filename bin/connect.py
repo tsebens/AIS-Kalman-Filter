@@ -12,8 +12,6 @@ from exceptions import UseOfAbstractForm
 DataBase Object
 ------------------------------------------------------------------------------------------------------------------------
 '''
-
-
 class DataBase:
     """Holds the specifications for connecting to a database using the pypyodbc library and protocol"""
     def __init__(self, driver: str, server: str, port: str, db_name: str, user: str, pwd: str, trusted_source=False, verbose=False):
