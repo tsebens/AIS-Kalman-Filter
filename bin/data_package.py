@@ -6,6 +6,9 @@ from exceptions import NoTableConnectionSpecified, UseOfAbstractForm, AttemptToW
 
 
 # TODO: Still needs a fair amount of work ironing out the data loading process.
+from state import VesselState
+
+
 class DataPackageBase:
     def __init__(self, in_tbl_vessel: TableVessel=None, out_tbl_vessel: TableVessel=None):
         self.payload = None
@@ -34,9 +37,11 @@ class DataPackageBase:
         return self.payload
 
     def set_payload(self, data):
+        """Set payload to a collection of OrderedDicts"""
         self.payload = data
 
     def get_states(self):
+        """Return a list of VesselStates that have been built from the DataPackage's payload"""
         init_row_1 = self.payload[0]
         init_row_2 = self.payload[1]
         vs1, vs2 = self.make_init_states(init_row_1, init_row_2)
@@ -47,14 +52,18 @@ class DataPackageBase:
             prev_row = curr_row
         return states
 
+    def get_filtered_states(self, filter):
+        """Apply the passed filter function to the DataPackage's states, then return them"""
+        return filter(self.get_states())
+
     def make_state(self, curr_row, prev_row):
-        raise UseOfAbstractForm('Attempted to use abstract version of make_state. Must use a child class')
+        raise UseOfAbstractForm('Attempted to use abstract version of DataPackage.make_state. Must use a child class')
 
     def make_init_states(self, init_row_1: OrderedDict, init_row_2: OrderedDict):
-        raise UseOfAbstractForm('Attempted to use abstract version of make_init_state. Must use a child class')
+        raise UseOfAbstractForm('Attempted to use abstract version of DataPackage.make_init_state. Must use a child class')
 
     def make_rows(self, states):
         return [self.make_row(state) for state in states]
 
     def make_row(self, state):
-        raise UseOfAbstractForm('Attempted to use abstract version of make_row. Must use a child class')
+        raise UseOfAbstractForm('Attempted to use abstract version of DataPackage.make_row. Must use a child class')
