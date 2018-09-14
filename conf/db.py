@@ -7,12 +7,12 @@ from connect import SQLServerDataBase, PostgreSQLDataBase
 DATABASE CONFIGURATION
 ----------------------------------------------------------------
 """
-server = r'localhost'
-port = '5432'
-dbname = 'kalman'
-user = 'tristan.sebens'
+server = r'akr-j53\PROD'
+port = '1433'
+dbname = 'CATCH_IN_AREAS'
+user = ''
 pwd = ''
-trusted = False # Tells the connection to use OS authentication or not
+trusted = True # Tells the connection to use OS authentication or not
 
 """
 ----------------------------------------------------------------
@@ -20,7 +20,7 @@ DATABASE CONNECTION
 ----------------------------------------------------------------
 The database connection produced by the specifications contained in this file
 """
-db = PostgreSQLDataBase(server, port, dbname, user, pwd, trusted_source=trusted)
+db = SQLServerDataBase(server, port, dbname, user, pwd, trusted_source=trusted)
 
 """
 ----------------------------------------------------------------
