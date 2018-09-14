@@ -2,12 +2,9 @@ import sys
 from builtins import StopIteration
 from csv import DictWriter
 
-from os import getcwd, listdir
-from os.path import join, splitext, basename
+from os import getcwd
+from os.path import join
 
-from data_package import DataPackageBase
-from plot import clear, show_plot
-from calculate import rmse_of_states
 
 cwd = getcwd()
 sys.path.append(join(cwd, '..'))
@@ -16,6 +13,7 @@ cwd = static_wd
 sys.path.append(cwd) # We do this because SQL Server calls this script from a different working directory
 sys.path.append(join(cwd, 'bin'))
 sys.path.append(join(cwd, 'conf'))
+from data_package import DataPackageBase
 from conf.db import ID_FIELD, OUTPUT_TABLE, INPUT_TABLE, TIMESTAMP_FIELD, db
 from conf.filter import filter_state
 from connect import TableVessel
@@ -78,4 +76,8 @@ def test_bad_data():
     filter_vms_csv(fp)
 
 if __name__ == '__main__':
-    main()
+    if sys.argv[1] == '-t':
+        print("Testing connection")
+        db.test_connection()
+    else:
+        main()
