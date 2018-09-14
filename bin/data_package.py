@@ -12,7 +12,6 @@ from state import VesselState
 class DataPackageBase:
     def __init__(self, in_tbl_vessel: TableVessel=None, out_tbl_vessel: TableVessel=None):
         self.payload = None
-        self.filtered_states = None
         self.in_tbl_conn = in_tbl_vessel
         self.out_tbl_conn = out_tbl_vessel
 
@@ -22,14 +21,14 @@ class DataPackageBase:
         # The generator should in turn reference a buffered generator from within the TableConnection
         if self.in_tbl_conn is None:
             raise NoTableConnectionSpecified('Attempted to load data into DataPackage, but no TableConnection has been specified.')
-        self.payload = self.in_tbl_conn.get_data()
+        # Load the data from the DB and convert it into VesselStates
+        self.payload = self.make_states(self.in_tbl_conn.get_data())
 
     def write_payload(self):
         """Write the filtered states"""
         if self.out_tbl_conn is None:
             raise NoTableConnectionSpecified('Attempted to write DataPackage payload to DB, but no TableConnection has been specified.')
-        if self.filtered_states is None:
-            raise AttemptToWriteUnprocessedData('Attempted to write to the DB, but the data hasn\'t been processed yet.')
+        # Re-convert the states into rows (including the newly filtered data) and write it back to the DB
         self.out_tbl_conn.write_data(self.make_rows(self.payload))
 
     def get_payload(self):
@@ -40,21 +39,17 @@ class DataPackageBase:
         """Set payload to a collection of OrderedDicts"""
         self.payload = data
 
-    def get_states(self):
+    def make_states(self, rows):
         """Return a list of VesselStates that have been built from the DataPackage's payload"""
-        init_row_1 = self.payload[0]
-        init_row_2 = self.payload[1]
+        init_row_1 = rows[0]
+        init_row_2 = rows[1]
         vs1, vs2 = self.make_init_states(init_row_1, init_row_2)
         states = [vs1, vs2]
         prev_row = init_row_2
-        for curr_row in self.payload[2:]:
+        for curr_row in rows[2:]:
             states.append(self.make_state(curr_row, prev_row))
             prev_row = curr_row
         return states
-
-    def get_filtered_states(self, filter):
-        """Apply the passed filter function to the DataPackage's states, then return them"""
-        return filter(self.get_states())
 
     def make_state(self, curr_row, prev_row):
         raise UseOfAbstractForm('Attempted to use abstract version of DataPackage.make_state. Must use a child class')

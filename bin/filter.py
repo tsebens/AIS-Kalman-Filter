@@ -19,11 +19,11 @@ Refer to the FilterState object documentation for a more complete description.
 
 def ais_kalman(vessel_states, filter_state: FilterState):
     # Populate our initial values
-    prev_state = make_initial_filter_state(vessel_states.__next__())
+    prev_state = make_initial_filter_state(vessel_states[0])
     filtered_states = [prev_state,]
     # Now, for every data point we have (skipping the first one since we've already loaded those values) we use the
     # Kalman filter to estimate the true location of our vessel.
-    for curr_state in vessel_states:
+    for curr_state in vessel_states[1:]:
         # Now we can make our predictions for location, heading, and SoG
         predict_step(curr_state, prev_state, filter_state)
         # Now that we have all of our predictions, we will compare them to our measurements, and create our new estimates.
@@ -79,6 +79,6 @@ def pre_process_data(data: List, factor=2):
     prev_state: VesselState = data[0]
     for index in range(1, len(data)):
         curr_state = data[index]
-        if distance_between_two_states(prev_state, curr_state) < factor * avg_distance:
+        if distance_between_two_states(prev_state, curr_state) > factor * avg_distance:
             return data[index-1:]
         prev_state = curr_state

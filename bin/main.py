@@ -40,10 +40,14 @@ def main():
             data_package.load_payload()
             print('Preprocessing data...')
             # Preprocess the data to attempt to remove
-            data_package.set_payload(pre_process_data(data_package.get_states()))
+            data_package.set_payload(
+                pre_process_data(data_package.get_payload())
+            )
             print("Filtering data...")
             # Filter the data
-            data_package.set_payload(ais_kalman(data_package.get_states(), filter_state))
+            data_package.set_payload(
+                ais_kalman(data_package.get_payload(), filter_state)
+            )
             print('Writing payload...')
             # Write the filtered data back.
             data_package.write_payload()
