@@ -2,7 +2,6 @@
 from math import tan, radians
 import numpy as np
 from datetime import datetime
-
 from conf.static import KNTS_TO_MPS_CONV_FACT
 from state import VarState, VesselState
 from timezones import UTC
@@ -17,9 +16,8 @@ def true_heading_to_unit_vector(heading):
     return unit_v
 
 
-def unit_vectorto_true_heading(vector):
-    # TODO: Implement this function
-    raise Exception('You still have to implement this conversion function, shithead.')
+def unit_vector_to_true_heading(vector):
+    angle = np.arctan(vector[1]/vector[0])
 
 
 # Convert an ais format timestamp to a datetime object.

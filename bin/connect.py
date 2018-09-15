@@ -74,7 +74,7 @@ class DataBase:
             self.get_query_base()
                 .from_(self.db_columns_table)
                 .select(self.db_column_column_name)
-                .where(self.db_column_table_name_field == table._table_name)
+                .where(self.db_column_table_name_field == table.table_name)
         )
         return [result[0] for result in conn.cursor().execute(q)]
 
@@ -184,6 +184,8 @@ class SQLServerDataBase(DataBase):
         sub_q += ';'
         full_q += sub_q
         print('Write query complete.')
+        with open(r'F:\CIA_Python\PROD\PythonScripts\AIS-Kalman-Filter\write_statement.txt', 'w') as log:
+            log.write(full_q)
         return full_q
 
 
@@ -225,12 +227,13 @@ class TableVessel:
         conn.close()
 
     def make_get_data_statement(self):
-        return str(
+        q = str(
             self.db.get_query_base()
             .from_(self.table).select('*')
             .where(self.id_field == self.id_value)
             .orderby(self.order_field)
         )
+        return q
 
 
     def make_write_data_statement(self, data):

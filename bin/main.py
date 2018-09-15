@@ -27,7 +27,7 @@ def main():
     ids = db.get_unique_elements(INPUT_TABLE, ID_FIELD)
     for id_val in ids:
         try:
-            print('Processing %s' % id)
+            print('Processing %s' % id_val)
             # Define the input and output points for the data
             data_package = VMSDataPackage(
                 TableVessel(db, INPUT_TABLE, id_field=ID_FIELD, id_value=id_val, order_field=TIMESTAMP_FIELD),
@@ -76,8 +76,4 @@ def test_bad_data():
     filter_vms_csv(fp)
 
 if __name__ == '__main__':
-    if sys.argv[1] == '-t':
-        print("Testing connection")
-        db.test_connection()
-    else:
-        main()
+     main()

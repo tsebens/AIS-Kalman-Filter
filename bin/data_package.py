@@ -41,6 +41,9 @@ class DataPackageBase:
 
     def make_states(self, rows):
         """Return a list of VesselStates that have been built from the DataPackage's payload"""
+        if len(rows) < 2:
+            # TODO: This is not awesome, but right now there's nothing to catch a dataset with one row in it
+            raise StopIteration
         init_row_1 = rows[0]
         init_row_2 = rows[1]
         vs1, vs2 = self.make_init_states(init_row_1, init_row_2)

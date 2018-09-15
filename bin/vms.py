@@ -2,7 +2,7 @@ from csv import DictReader
 import numpy as np
 from datetime import datetime
 from calculate import unit_vector, vector_between_two_points, distance_between_two_points
-from convert import seconds_passed_between_datetimes
+from convert import seconds_passed_between_datetimes, unit_vector_to_true_heading
 from data_package import DataPackageBase
 from conf.db import LON_FIELD_NAME, LAT_FIELD_NAME, TIMESTAMP_FIELD_NAME, OUTPUT_LAT_FIELD_NAME, OUTPUT_LON_FIELD_NAME, \
     OUTPUT_DEV_FIELD_NAME
@@ -82,7 +82,7 @@ def make_row_from_vms_state(state: VesselState):
     row[OUTPUT_DEV_FIELD_NAME] = dev if not np.isnan(dev) else 0
     row[OUTPUT_LON_FIELD_NAME], row[OUTPUT_LAT_FIELD_NAME] = convert_aa_to_loc(state.loc_state.est[0], state.loc_state.est[1])
     row['flagged_by_filter'] = 1 if state.is_flagged else 0
-    row['AVERAGE_HEADING'] = state.head_state.est
+    row['AVERAGE_BEARING'] = unit_vector_to_true_heading(state.head_state.est)
     #row.pop('VMS_RECORD_ID')
     return row
 

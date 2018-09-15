@@ -18,6 +18,10 @@ Refer to the FilterState object documentation for a more complete description.
 
 
 def ais_kalman(vessel_states, filter_state: FilterState):
+    if vessel_states is None:
+        raise StopIteration
+    if len(vessel_states) < 2:
+        raise StopIteration
     # Populate our initial values
     prev_state = make_initial_filter_state(vessel_states[0])
     filtered_states = [prev_state,]
@@ -62,6 +66,8 @@ def flag_state(curr_state, prev_state):
     distance = distance_between_two_points(prev_state.loc_state.est,
                                 curr_state.loc_state.meas)
     time_passed = seconds_passed_between_states(curr_state, prev_state)
+    if time_passed == 0:
+        time_passed = 0.0000000000001
     required_speed = distance / time_passed
     if required_speed > 1.5 * MAX_ALLOWABLE_VESSEL_SPEED:    
         curr_state.is_flagged = True
