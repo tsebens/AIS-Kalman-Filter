@@ -10,6 +10,7 @@ from timezones import UTC
 
 # Converts a true heading to a unit vector
 def true_heading_to_unit_vector(heading):
+    """Convert a heading to a vector"""
     unit_v = np.array([1, tan(radians(heading))])
     mag = np.linalg.norm(unit_v)
     unit_v = unit_v/mag
@@ -17,9 +18,17 @@ def true_heading_to_unit_vector(heading):
     return unit_v
 
 
-def unit_vectorto_true_heading(vector):
-    # TODO: Implement this function
-    raise Exception('You still have to implement this conversion function, shithead.')
+def unit_vector_to_true_heading(vector):
+    """Convert a heading vector to a heading measurement (COG)"""
+    return angle_to_heading(np.degrees(np.arctan2(vector[1], vector[0])))
+
+
+def angle_to_heading(a):
+    """Convert a standard angle to a heading measurement (COG)"""
+    if a <= 90:
+        return 90 - a
+    else:
+        return 450 - a
 
 
 # Convert an ais format timestamp to a datetime object.
