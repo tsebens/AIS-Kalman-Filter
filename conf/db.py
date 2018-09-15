@@ -27,7 +27,7 @@ db = SQLServerDataBase(server, port, dbname, user, pwd, trusted_source=trusted)
 INPUT
 ----------------------------------------------------------------
 """
-INPUT_TABLE = Table("VMS_TEST_VOYAGE", schema='public')
+INPUT_TABLE = Table("STG_VMS", schema='dbo')
 # The field the filter will use to distinguish individual vessels
 ID_FIELD_NAME = "VESSEL_ID"
 ID_FIELD = Field(ID_FIELD_NAME, table=INPUT_TABLE)
@@ -47,7 +47,7 @@ TIMESTAMP_FIELD = Field(TIMESTAMP_FIELD_NAME, table=INPUT_TABLE)
 OUTPUT
 ----------------------------------------------------------------
 """
-OUTPUT_TABLE = Table("VMS_TEST_VOYAGE_FILTERED", schema='public')
+OUTPUT_TABLE = Table("stg_vms_test", schema='dbo')
 # Fieldname for the output longitude values
 OUTPUT_LON_FIELD_NAME = "FILT_LON"
 OUTPUT_LON_FIELD = Field(OUTPUT_LON_FIELD_NAME, table=OUTPUT_TABLE)
