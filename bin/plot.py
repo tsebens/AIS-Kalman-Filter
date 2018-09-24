@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plot
 
+from convert import unit_vector_to_true_heading
+
 '''
 plt.plot([1,2,3,4], [1,5,10,20], '--^r')
 plt.axis([0, 6, 0, 20])
@@ -106,6 +108,25 @@ def make_plot(states, delay=0, b_func=None, title: str=None, save: str=None):
     if save is not None:
         plot.savefig(save, format='png', dpi=1000)
         plot.clf()
+
+
+def make_heading_plot(states):
+    plot_loc_data([state.loc_state.meas for state in states])
+    plot_loc_predictions([state.loc_state.pred for state in states])
+    plot_loc_estimates([state.loc_state.est for state in states])
+    plot_heading_data([state.head_state.meas for state in states], [state.loc_state.meas for state in states])
+    for label, x, y in zip(
+            ['%s degrees' % unit_vector_to_true_heading(state.head_state.meas) for state in states],
+            [state.loc_state.meas[0] for state in states],
+            [state.loc_state.meas[1] for state in states]
+    ):
+        plot.annotate(
+            label,
+            xy=(x, y), xytext=(-20, 20),
+            textcoords='offset points', ha='left', va='bottom',
+            bbox=dict(boxstyle='round,pad=0.5', fc='green', alpha=0.5),
+            arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
+
 
 
 '''

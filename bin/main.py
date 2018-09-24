@@ -6,7 +6,7 @@ from os import getcwd, listdir
 from os.path import join, splitext, basename
 
 from data_package import DataPackageBase
-from plot import clear, show_plot
+from plot import clear, show_plot, make_heading_plot
 from calculate import rmse_of_states
 
 cwd = getcwd()
@@ -46,7 +46,9 @@ def main():
             data_package.set_payload(ais_kalman(data_package.get_payload(), filter_state))
             print('Writing payload...')
             # Write the filtered data back.
-            data_package.write_payload()
+            # data_package.write_payload()
+            make_heading_plot(data_package.get_payload())
+            show_plot()
         except StopIteration:
             print('Empty dataset')
             continue
