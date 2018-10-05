@@ -28,7 +28,7 @@ def angle_to_heading(a):
         return 90 - a
     else:
         return 450 - a
-    
+
 
 # Convert an ais format timestamp to a datetime object.
 def ais_timestamp_to_datetime(timestamp, tz=UTC):
